@@ -97,6 +97,7 @@
   function recalc() {
     if (state.sim) endSim();
     state.res = S.analyze(state.stage, state.design);
+    $('shareTop').hidden = true;
     updatePanel();
   }
 
@@ -418,6 +419,7 @@
         sim.phase = 'collapse'; sim.t = 0;
         buildParticles(sim);
         sim.failed.add(sim.seq[0]); sim.nextFail = 1; sim.tFail = 0;
+        revealShare();
       }
     } else if (sim.phase === 'collapse') {
       sim.tFail += dt;
@@ -425,7 +427,7 @@
         sim.failed.add(sim.seq[sim.nextFail++]); sim.tFail = 0;
       }
       stepPBD(sim, 1 / 120); stepPBD(sim, 1 / 120);
-      if (sim.t > 4.5 && !sim.reported) finishTest();
+      if (sim.t > 3.5 && !sim.reported) finishTest();
     }
   }
 
@@ -461,7 +463,16 @@
       <div class="explain">${why}</div>
       <button id="shareBtn" class="share">𝕏 でスコアを投稿</button>`;
     $('shareBtn').onclick = () => shareOnX(st, res, sc);
+    $('reportCard').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     $('testBtn').textContent = '▶ 荷重テスト';
+  }
+
+  // the share button lives in the header bar so it is always visible, even on short screens
+  function revealShare() {
+    const st = state.stage, res = state.res, sc = scoreOf(res);
+    const b = $('shareTop');
+    b.hidden = false;
+    b.onclick = () => shareOnX(st, res, sc);
   }
 
   function shareOnX(st, res, sc) {
