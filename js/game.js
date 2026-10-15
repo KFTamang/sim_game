@@ -458,8 +458,23 @@
     $('report').innerHTML = `
       <p class="${ok ? 'pass' : 'fail'}"><b>${ok ? '合格' : '不合格'}</b> — 耐荷重 ${fmt(res.capacity, 1)} kN(目標 ${st.required}kN)${ok ? ` / スコア <b>${sc}</b>` : ''}${bestMsg}</p>
       <p>最初に壊れた部材: ${sizeLabel(m)} 長さ ${r.L.toFixed(1)}m</p>
-      <div class="explain">${why}</div>`;
+      <div class="explain">${why}</div>
+      <button id="shareBtn" class="share">𝕏 でスコアを投稿</button>`;
+    $('shareBtn').onclick = () => shareOnX(st, res, sc);
     $('testBtn').textContent = '▶ 荷重テスト';
+  }
+
+  function shareOnX(st, res, sc) {
+    const lines = sc !== null
+      ? [`Bridge Lab「${st.id}. ${st.name}」で橋を設計しました!`,
+         `耐荷重 ${fmt(res.capacity, 0)}kN / コスト ${fmt(res.cost, 0)} / スコア ${sc}`,
+         '#BridgeLab']
+      : [`Bridge Lab「${st.id}. ${st.name}」に挑戦中…`,
+         `耐荷重 ${fmt(res.capacity, 0)}kN(目標 ${st.required}kN)で崩壊!`,
+         '#BridgeLab'];
+    const params = new URLSearchParams({ text: lines.join('\n') });
+    if (/^https?:$/.test(location.protocol)) params.set('url', location.href.split('#')[0]);
+    window.open(`https://x.com/intent/post?${params.toString()}`, '_blank', 'noopener');
   }
 
   // ------------------------------------------------------------------ drawing
