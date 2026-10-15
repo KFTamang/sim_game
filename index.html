@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bridge Lab — 橋を作って壊して、直感を磨く</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <h1>Bridge Lab</h1>
+  <nav id="stageTabs" class="tabs" aria-label="ステージ"></nav>
+  <a class="help" href="#" id="helpBtn">遊び方</a>
+</header>
+
+<main class="layout">
+  <section class="stagewrap">
+    <canvas id="cv" aria-label="橋の設計エリア"></canvas>
+    <div id="toast" class="toast" hidden></div>
+    <div class="hint" id="hint"></div>
+  </section>
+
+  <aside class="panel">
+    <div class="card goal">
+      <div class="row"><span class="lbl">ステージ</span><b id="stageName"></b></div>
+      <p id="stageBrief" class="small"></p>
+      <div class="meter">
+        <div class="meterhead"><span>耐荷重</span><span><b id="capVal">0</b> kN <span class="dim">/ 目標 <span id="reqVal"></span></span></span></div>
+        <div class="bar"><div id="capBar"></div><i id="reqMark"></i></div>
+      </div>
+      <div class="meter">
+        <div class="meterhead"><span>コスト</span><span><b id="costVal">0</b> <span class="dim">/ 予算 <span id="budVal"></span></span></span></div>
+        <div class="bar"><div id="costBar"></div></div>
+      </div>
+      <div class="row big"><span class="lbl">スコア</span><b id="scoreVal">—</b></div>
+      <div class="row small"><span class="lbl">ベスト</span><span id="bestVal">—</span></div>
+      <p id="status" class="status"></p>
+    </div>
+
+    <div class="card">
+      <h2>部材</h2>
+      <div class="seg" id="typeSeg"></div>
+      <div class="seg" id="sizeSeg"></div>
+      <p class="small dim" id="secInfo"></p>
+    </div>
+
+    <div class="card">
+      <h2>道具</h2>
+      <div class="seg" id="toolSeg"></div>
+      <div class="btns">
+        <button id="undoBtn" title="Ctrl+Z">元に戻す</button>
+        <button id="redoBtn" title="Ctrl+Y">やり直し</button>
+        <button id="clearBtn">全消去</button>
+      </div>
+      <button id="testBtn" class="primary">▶ 荷重テスト</button>
+    </div>
+
+    <div class="card" id="memberCard" hidden>
+      <h2>部材の情報</h2>
+      <div id="memberInfo" class="small"></div>
+    </div>
+
+    <div class="card" id="reportCard" hidden>
+      <h2>テスト結果</h2>
+      <div id="report" class="small"></div>
+    </div>
+  </aside>
+</main>
+
+<dialog id="helpDlg">
+  <h2>遊び方</h2>
+  <ul>
+    <li><b>描く</b>: 格子点から格子点へドラッグすると部材が付きます。道路(y=0)の節点は最初から並んでいます。</li>
+    <li><b>道路は切らさない</b>: 左右の崖を道路でつなぎ、道路を支える節点(支点)は <b>2m以内</b>の間隔で。</li>
+    <li><b>三角形</b>を作ると形が固まります。四角形は潰れます(不安定)。</li>
+    <li>色: <span class="tcol">青=引張</span> / <span class="ccol">赤=圧縮</span>。濃いほど限界に近い部材です。◎が最初に壊れる部材。</li>
+    <li>圧縮材は<b>座屈</b>します(限界は長さの2乗に反比例)。長い圧縮材はパイプにするか短くしよう。</li>
+    <li>スコア = 耐荷重 ÷ コスト × 1000。目標を満たし予算内なら記録されます。</li>
+    <li>キー: 1 描く / 2 塗り替え / 3 消す、Z で元に戻す、Space でテスト。</li>
+  </ul>
+  <form method="dialog"><button class="primary">はじめる</button></form>
+</dialog>
+
+<script src="js/solver.js"></script>
+<script src="js/design.js"></script>
+<script src="js/stages.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

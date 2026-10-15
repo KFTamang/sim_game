@@ -1,0 +1,10 @@
+{
+  "name": "sim_game",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Physics-intuition simulation games in the browser (Bridge Lab first)",
+  "scripts": {
+    "test": "node tests/solver.test.js",
+    "serve": "python3 -m http.server 8000"
+  }
+}
