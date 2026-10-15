@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sim_game — 物理の直感を作るシミュレーションゲーム</title>
+<meta name="description" content="直感的にわかりにくい物理現象を題材に、ハイスコアを狙って試行錯誤することで直感を磨くブラウザゲーム集。">
+<style>
+  :root { --bg:#0f1722; --panel:#172233; --line:#2a3a54; --text:#e6edf6; --dim:#8fa3bd; --accent:#ffb703; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+    font:15px/1.7 system-ui,-apple-system,"Segoe UI","Hiragino Sans","Yu Gothic UI",sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 20px 64px; }
+  h1 { margin:0 0 6px; font-size: 26px; letter-spacing:.03em; }
+  .lead { color:var(--dim); margin:0 0 28px; }
+  p { margin: 0 0 14px; }
+  h2 { font-size:13px; color:var(--dim); letter-spacing:.08em; margin:34px 0 10px; font-weight:600; }
+  .card { display:block; background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:16px 18px; color:inherit; text-decoration:none; transition:border-color .15s, transform .15s; }
+  a.card:hover { border-color:var(--accent); transform:translateY(-1px); }
+  .card b { font-size:18px; }
+  .card .tag { float:right; color:var(--accent); font-size:13px; }
+  .card small { color:var(--dim); display:block; margin-top:4px; }
+  .soon { opacity:.55; margin-top:10px; }
+  ul { color:var(--dim); padding-left:1.2em; margin:0; }
+  footer { margin-top:40px; color:var(--dim); font-size:13px; }
+  footer a { color:var(--dim); }
+</style>
+</head>
+<body>
+<main>
+  <h1>sim_game</h1>
+  <p class="lead">物理の直感を作るシミュレーションゲーム</p>
+
+  <p>直感的にわかりにくい物理現象を題材に、<b>ハイスコアを狙って何度も試行錯誤する</b>ことで
+  「こうすればこうなる」という感覚を養うブラウザゲーム集です。
+  スパゲッティブリッジの授業を、シミュレーションとスコア付けで高速化し、ゲームとして繰り返し遊べるようにしました。</p>
+
+  <h2>GAMES</h2>
+  <a class="card" href="bridge_lab/index.html">
+    <span class="tag">遊ぶ ▶</span>
+    <b>Bridge Lab</b>
+    <small>橋の強度 — 材料を節約しながら、どこまで重い荷重に耐えられる橋を作れるか。三角形の剛性、引張と圧縮、座屈を体で覚える。</small>
+  </a>
+  <div class="card soon">
+    <b>次回作(準備中)</b>
+    <small>熱伝導パスの最適化 / プリント基板のインピーダンス整合 / ヒートシンク形状 など</small>
+  </div>
+
+  <footer>
+    <a href="https://github.com/KFTamang/sim_game">GitHub</a>
+  </footer>
+</main>
+</body>
+</html>
