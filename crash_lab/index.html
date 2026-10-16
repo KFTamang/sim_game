@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crash Lab — 衝突を受け止める構造を作る</title>
+<link rel="stylesheet" href="style.css">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VSQQ2718YQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-VSQQ2718YQ');
+</script>
+</head>
+<body>
+<header class="top">
+  <a class="home" href="../index.html" title="ゲーム一覧へ">← sim_game</a>
+  <h1>Crash Lab</h1>
+  <nav id="stageTabs" class="tabs" aria-label="ステージ"></nav>
+  <button id="shareTop" class="share top-share" hidden>𝕏 でスコアを投稿</button>
+  <a class="help" href="#" id="helpBtn">遊び方</a>
+</header>
+
+<main class="layout">
+  <section class="stagewrap">
+    <div class="view">
+      <canvas id="cv" aria-label="クラッシャブル構造の設計エリア"></canvas>
+      <div class="readout" id="readout"></div>
+      <div id="toast" class="toast" hidden></div>
+      <div class="hint" id="hint">ドラッグで材料を塗る(右クリックで消す / Shiftで直線)</div>
+    </div>
+    <canvas id="gplot" aria-label="減速度の時間変化"></canvas>
+  </section>
+
+  <aside class="panel">
+    <div class="card goal">
+      <div class="row"><span class="lbl">ステージ</span><b id="stageName"></b></div>
+      <p id="stageBrief" class="small"></p>
+      <div class="meter">
+        <div class="meterhead"><span>乗員室の最大G</span><span><b id="gVal">—</b> <span class="dim">/ 上限 <span id="gLim"></span> G</span></span></div>
+        <div class="bar"><div id="gBar"></div><i id="gMark"></i></div>
+      </div>
+      <div class="meter">
+        <div class="meterhead"><span>材料コスト</span><span><b id="costVal">0</b> <span class="dim">/ 予算 <span id="budVal"></span></span></span></div>
+        <div class="bar"><div id="costBar"></div></div>
+      </div>
+      <div class="row small"><span class="lbl">潰れ代の使用</span><span id="strokeVal">—</span></div>
+      <div class="row small"><span class="lbl">理想との近さ</span><span id="etaVal">—</span></div>
+      <div class="row big"><span class="lbl">スコア</span><b id="scoreVal">—</b></div>
+      <div class="row small"><span class="lbl">ベスト</span><span id="bestVal">—</span></div>
+      <p id="status" class="status"></p>
+    </div>
+
+    <div class="card">
+      <h2>材料</h2>
+      <div class="seg mat" id="matSeg"></div>
+      <p class="small dim" id="matInfo"></p>
+      <div class="seg" id="brushSeg"></div>
+      <div class="chk">
+        <label><input type="checkbox" id="chkUse" checked> 潰れ具合を表示</label>
+        <label><input type="checkbox" id="chkMirror"> 上下対称に塗る</label>
+      </div>
+      <div class="btns">
+        <button id="undoBtn" title="Ctrl+Z">元に戻す</button>
+        <button id="redoBtn" title="Ctrl+Y">やり直し</button>
+        <button id="clearBtn">全消去</button>
+      </div>
+      <button id="testBtn" class="primary" disabled>▶ 衝突テスト(提出)</button>
+      <button id="skipBtn" class="primary alt" hidden>■ 再生を止める</button>
+    </div>
+
+    <div class="card">
+      <h2>セルの情報</h2>
+      <div id="cellInfo" class="small cellinfo dim">マウスを重ねると材料と潰れ具合が出ます</div>
+    </div>
+
+    <div class="card" id="reportCard" hidden>
+      <h2>結果</h2>
+      <div id="report" class="small"></div>
+      <button id="shareBtn" class="share">𝕏 でスコアを投稿</button>
+    </div>
+  </aside>
+</main>
+
+<dialog id="helpDlg">
+  <h2>遊び方</h2>
+  <ul>
+    <li>左の壁に向かって、右側の<b>乗員室</b>(質量1トン)が突っ込みます。壁と乗員室の間に材料を塗って、<b>つぶれながら衝撃を吸収する構造(クラッシャブルゾーン)</b>を作ろう。</li>
+    <li>目標は、乗員室にかかる<b>最大の減速度(G)</b>を小さくすること。人が耐えられる上限(ステージごとに表示)を超えると不合格です。</li>
+    <li>止めるには、運動エネルギー = <b>力 × 潰れる距離</b> を吸収しなければなりません。力が小さすぎると潰れきって<b>底づき</b>し、壁に激突。力が大きすぎるとGが跳ね上がります。</li>
+    <li>理想は「<b>潰れ代を使い切って、力を一定に保つ</b>」こと。最初に座屈するときの<b>山(初期ピーク)</b>が高いほどGは悪化します。</li>
+    <li>材料: アルミ薄板(弱い・軽い)/ 鋼板 / 高張力鋼(強い・重い)。<b>並列に並べると力が足し算</b>、直列に並べると<b>弱い所から順に潰れる</b>。</li>
+    <li>スコア = 理想との近さ(理想の一定減速度 ÷ 実際の最大G)× 1000 × 軽さのボーナス。</li>
+    <li>「潰れ具合を表示」で、各セルがどれだけ潰れたか(青 = ほぼ未使用)が見えます。<b>使われなかった材料は、ただの重りです。</b></li>
+    <li>キー: 1〜3 材料 / E 消しゴム / [ ] 筆の太さ / Z 元に戻す / Shift+ドラッグで直線。</li>
+  </ul>
+  <form method="dialog"><button class="primary">はじめる</button></form>
+</dialog>
+
+<script src="js/solver.js"></script>
+<script src="js/stages.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

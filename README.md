@@ -10,6 +10,7 @@
 |---|---|---|
 | [`bridge_lab/`](bridge_lab/) | 橋の強度(2Dトラス、座屈) | `bridge_lab/index.html` をブラウザで開く |
 | [`heat_lab/`](heat_lab/) | 熱の通り道(2D定常熱伝導、枝分かれ構造) | `heat_lab/index.html` をブラウザで開く |
+| [`crash_lab/`](crash_lab/) | クラッシャブル構造(衝突、座屈、エネルギー吸収) | `crash_lab/index.html` をブラウザで開く |
 
 各ゲームは独立したフォルダで、ビルド不要・外部依存なしの静的ページです。
 GitHub Pages で公開する場合、ルートの `index.html` がゲームの案内ページになります(`<サイトURL>/bridge_lab/` が橋ゲーム)。新しいゲームを足したら、`index.html` のカードも追加してください。
@@ -25,6 +26,7 @@ GitHub Pages で公開する場合、ルートの `index.html` がゲームの�
 index.html     ゲームの案内ページ(GitHub Pagesのトップ)
 bridge_lab/    ゲーム1: Bridge Lab(index.html, js/, tests/ ...)
 heat_lab/      ゲーム2: Heat Lab
+crash_lab/     ゲーム3: Crash Lab
 docs/          共通ドキュメント(題材案など)
 <new_game>/    今後のゲームも同じ構成で追加
 ```

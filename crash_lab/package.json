@@ -1,0 +1,10 @@
+{
+  "name": "crash_lab",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Crash Lab: design a crushable structure that stops a car gently",
+  "scripts": {
+    "test": "node tests/solver.test.js",
+    "serve": "python3 -m http.server 8000"
+  }
+}
