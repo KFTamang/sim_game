@@ -31,6 +31,8 @@ body {
 .tabs button.on { border-color: var(--accent); color: var(--accent); }
 .tabs button .star { color: var(--ok); margin-left: 4px; }
 .help { color: var(--dim); text-decoration: none; }
+.home { color: var(--dim); text-decoration: none; font-size: 13px; white-space: nowrap; }
+.home:hover { color: var(--accent); }
 .layout { flex: 1; display: flex; min-height: 0; }
 .stagewrap { flex: 1; position: relative; min-width: 0; }
 #cv { width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
