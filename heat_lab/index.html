@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heat Lab — 熱の通り道を作って冷やす</title>
+<link rel="stylesheet" href="style.css">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VSQQ2718YQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-VSQQ2718YQ');
+</script>
+</head>
+<body>
+<header class="top">
+  <h1>Heat Lab</h1>
+  <nav id="stageTabs" class="tabs" aria-label="ステージ"></nav>
+  <button id="shareTop" class="share top-share" hidden>𝕏 でスコアを投稿</button>
+  <a class="help" href="#" id="helpBtn">遊び方</a>
+</header>
+
+<main class="layout">
+  <section class="stagewrap">
+    <canvas id="cv" aria-label="熱伝導の設計エリア"></canvas>
+    <canvas id="fx"></canvas>
+    <div id="toast" class="toast" hidden></div>
+    <div class="hint" id="hint">ドラッグで高伝導材を塗る(右クリックで消す / Shiftで直線)</div>
+  </section>
+
+  <aside class="panel">
+    <div class="card goal">
+      <div class="row"><span class="lbl">ステージ</span><b id="stageName"></b></div>
+      <p id="stageBrief" class="small"></p>
+      <div class="meter">
+        <div class="meterhead"><span>冷却倍率</span><span><b id="facVal">×1.0</b> <span class="dim">/ 目標 ×<span id="tgtVal"></span></span></span></div>
+        <div class="bar"><div id="facBar"></div><i id="tgtMark"></i></div>
+      </div>
+      <div class="meter">
+        <div class="meterhead"><span>材料コスト</span><span><b id="costVal">0</b> <span class="dim">/ 予算 <span id="budVal"></span></span></span></div>
+        <div class="bar"><div id="costBar"></div></div>
+      </div>
+      <div class="row big"><span class="lbl">スコア</span><b id="scoreVal">—</b></div>
+      <div class="row small"><span class="lbl">ベスト</span><span id="bestVal">—</span></div>
+      <p id="status" class="status"></p>
+      <div class="legend"></div>
+      <div class="legend-lbl"><span>冷</span><span>温度(√スケール・最大 = 材料なし時の最高温)</span><span>熱</span></div>
+    </div>
+
+    <div class="card">
+      <h2>材料</h2>
+      <div class="seg mat" id="matSeg"></div>
+      <p class="small dim" id="matInfo"></p>
+      <div class="seg" id="brushSeg"></div>
+      <div class="chk">
+        <label><input type="checkbox" id="chkTemp" checked> 温度</label>
+        <label><input type="checkbox" id="chkFlux" checked> 熱の流れ</label>
+      </div>
+      <div class="btns">
+        <button id="undoBtn" title="Ctrl+Z">元に戻す</button>
+        <button id="redoBtn" title="Ctrl+Y">やり直し</button>
+        <button id="clearBtn">全消去</button>
+      </div>
+      <button id="submitBtn" class="primary" disabled>✔ 提出してスコア確定</button>
+    </div>
+
+    <div class="card">
+      <h2>セルの情報</h2>
+      <div id="cellInfo" class="small cellinfo dim">マウスを重ねると温度が出ます</div>
+    </div>
+
+    <div class="card" id="reportCard" hidden>
+      <h2>結果</h2>
+      <div id="report" class="small"></div>
+      <button id="shareBtn" class="share">𝕏 でスコアを投稿</button>
+    </div>
+  </aside>
+</main>
+
+<dialog id="helpDlg">
+  <h2>遊び方</h2>
+  <ul>
+    <li>基板は全面で発熱(ステージによっては一部だけ)。熱を逃がせるのは<b>水色の放熱窓</b>だけです。</li>
+    <li>樹脂は熱を通しにくく、<b>アルミ・銅</b>は通しやすい。限られた予算で<b>熱の通り道</b>を塗り、最高温度を下げましょう。</li>
+    <li>点々の流れが熱の進む向き。<b>材料の中は速く、樹脂の中は遅い</b>のが見えます。</li>
+    <li>冷却倍率 = 材料なしの最高温 ÷ あなたの最高温。目標以上で「提出」できます。</li>
+    <li>スコア = (冷却倍率 − 1) ÷ コスト × 10000。少ない材料で冷やすほど高得点。</li>
+    <li>放熱窓に<b>つながっていない</b>材料(島)は効果が弱く、点線で表示されます。</li>
+    <li>キー: 1 アルミ / 2 銅 / E 消しゴム / [ ] 筆の太さ / Z 元に戻す / Shift+ドラッグで直線。</li>
+  </ul>
+  <form method="dialog"><button class="primary">はじめる</button></form>
+</dialog>
+
+<script src="js/solver.js"></script>
+<script src="js/stages.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

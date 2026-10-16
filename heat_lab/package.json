@@ -1,0 +1,10 @@
+{
+  "name": "heat_lab",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Heat Lab: paint conductive material to carry heat to the sink",
+  "scripts": {
+    "test": "node tests/solver.test.js",
+    "serve": "python3 -m http.server 8000"
+  }
+}
