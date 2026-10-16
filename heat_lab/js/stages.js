@@ -3,7 +3,7 @@
  *   w, h        grid size [cells]
  *   heat(x,y)   heat generation per cell (default 1 everywhere)
  *   obstacles   insulating holes [x0,y0,x1,y1] (cannot be painted)
- *   sinks       cold edges (T = 0): { side, from, to }
+ *   sinks       cold edges (T = 0): { side, from, to }   (sinkLabel: optional caption)
  *   budget      material cost you may spend (aluminium cell = 1, copper cell = 3)
  *   target      required cooling factor  (peak temperature with no material / your peak temperature)
  *   score       (factor - 1) / cost * 10000 once target and budget are met
@@ -37,6 +37,12 @@
       sinks: [{ side: 'bottom', from: 19, to: 23 }],
       budget: 600, target: 5,
       brief: '断熱の穴(暗い領域)が熱を遮る。穴を避けて通り道を作ろう。',
+    },
+    {
+      id: 5, name: '辺まるごと放熱', w: 40, h: 40,
+      sinks: [{ side: 'bottom', from: 0, to: 39 }], sinkLabel: '放熱面(下辺すべて)',
+      budget: 360, target: 10,
+      brief: '下辺がすべて放熱面。熱は最短で下へ抜けられる。それでも「どこにどれだけ材料を置くか」で差が出る。',
     },
   ];
 

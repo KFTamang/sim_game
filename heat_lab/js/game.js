@@ -257,10 +257,10 @@
     });
     ctx.fillStyle = '#4cc9f0'; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
     const s0 = S.st.sinks[0], mid = (s0.from + s0.to + 1) / 2 * view.cs;
-    if (s0.side === 'bottom') ctx.fillText('放熱窓', view.ox + mid, view.oy + view.cs * h + 20);
-    else if (s0.side === 'top') ctx.fillText('放熱窓', view.ox + mid, view.oy - 10);
-    else if (s0.side === 'right') { ctx.textAlign = 'left'; ctx.fillText('放熱窓', view.ox + view.cs * w + 10, view.oy + mid + 4); }
-    else { ctx.textAlign = 'right'; ctx.fillText('放熱窓', view.ox - 10, view.oy + mid + 4); }
+    if (s0.side === 'bottom') ctx.fillText(S.st.sinkLabel || '放熱窓', view.ox + mid, view.oy + view.cs * h + 20);
+    else if (s0.side === 'top') ctx.fillText(S.st.sinkLabel || '放熱窓', view.ox + mid, view.oy - 10);
+    else if (s0.side === 'right') { ctx.textAlign = 'left'; ctx.fillText(S.st.sinkLabel || '放熱窓', view.ox + view.cs * w + 10, view.oy + mid + 4); }
+    else { ctx.textAlign = 'right'; ctx.fillText(S.st.sinkLabel || '放熱窓', view.ox - 10, view.oy + mid + 4); }
 
     // frame
     ctx.strokeStyle = '#2a3a54'; ctx.lineWidth = 1;
