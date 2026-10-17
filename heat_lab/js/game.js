@@ -61,6 +61,7 @@
     S.T = new Float64Array(S.P.n);
     S.undo = []; S.redo = [];
     S.submitted = false;
+    Z.reset();
     $('reportCard').hidden = true; $('shareTop').hidden = true;
     initParticles();
     resize();
@@ -168,20 +169,32 @@
   }
 
   // ------------------------------------------------------------------ view
+  const Z = window.ViewZoom.attach(cv, { onChange: () => applyZoom(), cancel: cancelStroke });
+  function cancelStroke() {
+    if (!S.stroke) return;
+    if (S.stroke.pushed) { S.mat = S.undo.pop(); S.cost = H.costOf(S.mat); S.dirty = true; }
+    S.stroke = null; S.line = null;
+  }
+  function applyZoom() {
+    if (!view.base) return;
+    view.cs = view.base.cs * Z.k; view.ox = view.base.ox * Z.k + Z.tx; view.oy = view.base.oy * Z.k + Z.ty;
+    fctx.clearRect(0, 0, view.w, view.h);
+  }
   function resize() {
     const r = cv.parentElement.getBoundingClientRect();
     view.dpr = window.devicePixelRatio || 1;
-    view.w = Math.max(200, r.width); view.h = Math.max(200, r.height);
+    view.w = Math.max(1, r.width); view.h = Math.max(1, r.height);
+    Z.setSize(view.w, view.h);
     for (const c of [cv, fxc]) { c.width = Math.round(view.w * view.dpr); c.height = Math.round(view.h * view.dpr); }
     if (!S.P) return;
     const pad = 28;
-    view.cs = Math.min((view.w - pad * 2) / S.P.w, (view.h - pad * 2) / S.P.h);
-    view.ox = (view.w - view.cs * S.P.w) / 2;
-    view.oy = (view.h - view.cs * S.P.h) / 2;
+    const cs0 = Math.max(2, Math.min((view.w - pad * 2) / S.P.w, (view.h - pad * 2) / S.P.h));
+    view.base = { cs: cs0, ox: (view.w - cs0 * S.P.w) / 2, oy: (view.h - cs0 * S.P.h) / 2 };
     fctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
-    fctx.clearRect(0, 0, view.w, view.h);
+    applyZoom();
   }
   window.addEventListener('resize', resize);
+  if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(cv.parentElement);
 
   // heat image (one pixel per cell) and material edges (path in cell units)
   const heatCv = document.createElement('canvas');

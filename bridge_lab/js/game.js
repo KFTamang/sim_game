@@ -55,6 +55,7 @@
     state.design = saved && saved.nodes ? saved : D.createDesign(state.stage);
     // make sure all road nodes exist (older saves / safety)
     state.undo = []; state.redo = [];
+    Z.reset();
     state.sim = null;
     $('reportCard').hidden = true;
     resize();
@@ -225,20 +226,30 @@
   }
 
   // ------------------------------------------------------------------ view
+  const Z = window.ViewZoom.attach(cv, { onChange: () => applyZoom(), cancel: cancelGesture });
+  function cancelGesture() {
+    state.drag = null;
+    if (state.downCommit) { state.downCommit = false; undo(); }
+  }
+  function applyZoom() {
+    if (!view.base) return;
+    view.s = view.base.s * Z.k; view.ox = view.base.ox * Z.k + Z.tx; view.oy = view.base.oy * Z.k + Z.ty;
+  }
   function resize() {
     const r = cv.parentElement.getBoundingClientRect();
     view.dpr = window.devicePixelRatio || 1;
-    view.w = Math.max(200, r.width); view.h = Math.max(200, r.height);
+    view.w = Math.max(1, r.width); view.h = Math.max(1, r.height);
+    Z.setSize(view.w, view.h);
     cv.width = Math.round(view.w * view.dpr); cv.height = Math.round(view.h * view.dpr);
     const st = state.stage;
     if (!st) return;
     const worldW = st.span + 10;
     const worldH = st.yMax - st.yMin + 5;
-    view.s = Math.min(view.w / worldW, view.h / worldH);
-    view.ox = view.w / 2 - (st.span / 2) * view.s;
+    const s0 = Math.max(2, Math.min(view.w / worldW, view.h / worldH));
     // vertical: put yMax+1.5 at the top margin
-    const top = (view.h - worldH * view.s) / 2;
-    view.oy = top + (st.yMax + 2) * view.s;
+    const top = (view.h - worldH * s0) / 2;
+    view.base = { s: s0, ox: view.w / 2 - (st.span / 2) * s0, oy: top + (st.yMax + 2) * s0 };
+    applyZoom();
   }
   const px = (x) => view.ox + x * view.s;
   const py = (y) => view.oy - y * view.s;
@@ -272,10 +283,11 @@
     state.hover = snap(p);
     state.hoverMember = D.pickMember(state.design, p.x, p.y, 0.3);
     const tool = e.button === 2 ? 'erase' : state.tool;
+    state.downCommit = false;
     if (tool === 'erase') {
-      if (state.hoverMember >= 0) commit((d) => D.removeMember(d, state.hoverMember));
+      if (state.hoverMember >= 0) { commit((d) => D.removeMember(d, state.hoverMember)); state.downCommit = true; }
     } else if (tool === 'paint') {
-      if (state.hoverMember >= 0) commit((d) => D.paintMember(d, state.hoverMember, state.type, state.size));
+      if (state.hoverMember >= 0) { commit((d) => D.paintMember(d, state.hoverMember, state.type, state.size)); state.downCommit = true; }
     } else if (state.hover) {
       state.drag = { start: state.hover };
     }
@@ -314,6 +326,7 @@
   $('testBtn').onclick = () => { if (state.sim) endSim(); else startTest(); };
   $('helpBtn').onclick = (e) => { e.preventDefault(); $('helpDlg').showModal(); };
   window.addEventListener('resize', resize);
+  if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(cv.parentElement);
 
   // ------------------------------------------------------------------ load test
   function failureSequence(lam, firstId) {

@@ -46,6 +46,7 @@
     S.mat = new Uint8Array(n);
     if (saved && saved.length === n) S.mat.set(saved);
     S.undo = []; S.redo = []; S.submitted = false;
+    Z.reset();
     $('reportCard').hidden = true; $('shareTop').hidden = true;
     resize();
     recalc();
@@ -142,21 +143,33 @@
   }
 
   // ------------------------------------------------------------------ view
+  const Z = window.ViewZoom.attach(cv, { onChange: () => applyZoom(), cancel: cancelStroke });
+  function cancelStroke() {
+    if (!S.stroke) return;
+    if (S.stroke.pushed) { S.mat = S.undo.pop(); S.dirty = true; S.dirtyAt = 0; }
+    S.stroke = null; S.line = null;
+  }
+  function applyZoom() {
+    if (!view.base) return;
+    view.cs = view.base.cs * Z.k; view.ox = view.base.ox * Z.k + Z.tx; view.oy = view.base.oy * Z.k + Z.ty;
+  }
   function resize() {
     const r = cv.parentElement.getBoundingClientRect();
     view.dpr = window.devicePixelRatio || 1;
-    view.w = Math.max(200, r.width); view.h = Math.max(160, r.height);
+    view.w = Math.max(1, r.width); view.h = Math.max(1, r.height);
+    Z.setSize(view.w, view.h);
     cv.width = Math.round(view.w * view.dpr); cv.height = Math.round(view.h * view.dpr);
     const gr = gp.getBoundingClientRect();
     gp.width = Math.round(gr.width * view.dpr); gp.height = Math.round(gr.height * view.dpr);
     view.gw = gr.width; view.gh = gr.height;
     if (!S.P) return;
     const pad = 24, span = S.P.w + CAB_W + WALL_W + 0.6;
-    view.cs = Math.min((view.w - pad * 2) / span, (view.h - pad * 2) / S.P.h);
-    view.ox = (view.w - view.cs * span) / 2 + (WALL_W + 0.3) * view.cs;   // pixel x of world x = 0
-    view.oy = (view.h - view.cs * S.P.h) / 2;
+    const cs0 = Math.max(2, Math.min((view.w - pad * 2) / span, (view.h - pad * 2) / S.P.h));
+    view.base = { cs: cs0, ox: (view.w - cs0 * span) / 2 + (WALL_W + 0.3) * cs0, oy: (view.h - cs0 * S.P.h) / 2 };   // ox: pixel x of world x = 0
+    applyZoom();
   }
   window.addEventListener('resize', resize);
+  if (window.ResizeObserver) { const ro = new ResizeObserver(() => resize()); ro.observe(cv.parentElement); ro.observe(gp); }
   const px = (x) => view.ox + x * view.cs;
   const py = (y) => view.oy + y * view.cs;
 

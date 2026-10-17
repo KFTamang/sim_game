@@ -13,6 +13,7 @@
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
+body { height: 100dvh; overscroll-behavior: none; }
 body {
   margin: 0; background: var(--bg); color: var(--text);
   font: 14px/1.5 system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
@@ -95,3 +96,17 @@ dl.kv dt { color: var(--dim); } dl.kv dd { margin: 0; text-align: right; }
 
 .top-share { width: auto; margin: 0; padding: 4px 12px; flex: none; animation: pop .4s ease-out; }
 @keyframes pop { from { transform: scale(.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* ---- phones: let the page scroll, give the canvas a real height ---- */
+@media (max-width: 800px) {
+  html, body { height: auto; }
+  body { height: auto; min-height: 100dvh; }
+  .top { flex-wrap: wrap; gap: 6px 12px; padding: 6px 10px; }
+  .top .tabs { order: 5; flex: 1 0 100%; }
+  .top .help { margin-left: auto; }
+  .hint { display: none; }
+  .layout { flex: none; flex-direction: column; }
+  .stagewrap { flex: none; height: 64dvh; min-height: 360px; }
+  .panel { width: 100%; max-height: none; overflow: visible; border-left: 0; border-top: 1px solid var(--line); }
+  #gplot { height: 110px; }
+}
