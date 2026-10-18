@@ -94,7 +94,6 @@
     else { cls = 'ok'; msg = '一致!(最小コスト)。「提出」で記録できます。'; }
     el.className = `status ${cls}`; el.textContent = msg;
     $('submitBtn').disabled = sc === null;
-    $('stepLbl').textContent = S.step >= S.st.cols - 1 ? '最後' : (S.step < 0 ? '入力' : `列 ${S.step + 1}`);
     buildTabs();
     describeState();
   }
@@ -293,15 +292,7 @@
 
   // step controls
   function setStep(s) { S.step = clamp(s, -1, S.st.cols - 1); updateView(); updatePanel(); drawCircuit(); }
-  function stopPlay() { if (S.playing) { clearInterval(S.playing); S.playing = null; $('playBtn').textContent = '▶▶ 再生'; } }
-  $('stepBack').onclick = () => { stopPlay(); setStep(S.step - 1); };
-  $('stepFwd').onclick = () => { stopPlay(); setStep(S.step + 1); };
-  $('playBtn').onclick = () => {
-    if (S.playing) { stopPlay(); return; }
-    setStep(-1);
-    $('playBtn').textContent = '■ 停止';
-    S.playing = setInterval(() => { if (S.step >= S.st.cols - 1) { stopPlay(); return; } setStep(S.step + 1); }, 650);
-  };
+  function stopPlay() { if (S.playing) { clearInterval(S.playing); S.playing = null; } }
   window.addEventListener('keydown', (e) => {
     if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Quantum Lab — 量子ゲートで状態をつくる</title>
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=7">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-VSQQ2718YQ"></script>
 <script>
@@ -54,12 +54,6 @@
       <h2>ゲート(クリックで説明)</h2>
       <div class="seg mat wrap" id="matSeg"></div>
       <p class="small dim gdesc" id="matInfo"></p>
-      <div class="stepbar">
-        <button id="stepBack" title="←">◀</button>
-        <span id="stepLbl">最後</span>
-        <button id="stepFwd" title="→">▶</button>
-        <button id="playBtn">▶▶ 再生</button>
-      </div>
       <div class="btns" style="margin-top:8px">
         <button id="undoBtn" title="Ctrl+Z">元に戻す</button>
         <button id="redoBtn" title="Ctrl+Y">やり直し</button>
@@ -90,13 +84,13 @@
     <li>ステージによっては「目標の回路」ではなく<b>目標の動作</b>(ゲートの代わり)を、限られたゲートで作る。右の行列が一致すればOK。</li>
     <li>2ビットが<b>もつれる</b>と、各ビットの矢印は球の中心へ縮む(片方だけ見ると向きが決まらない)。</li>
     <li>全体の位相(global phase)は無視。コスト: H・X・Y・Z・S = 1、T = 2、CNOT・CZ = 2、SWAP = 3。スコア = 1000 × 最小コスト ÷ あなたのコスト。</li>
-    <li>列の番号(「入力」〜最終列)をクリック、または上でドラッグ(または ◀▶)すると、その列までの途中の状態を見られます。</li>
+    <li>列の番号(「入力」〜最終列)をクリック、またはその上でドラッグすると、その列までの途中の状態を見られます。</li>
   </ul>
   <form method="dialog"><button class="primary">はじめる</button></form>
 </dialog>
 
-<script src="js/solver.js?v=6"></script>
-<script src="js/stages.js?v=6"></script>
-<script src="js/game.js?v=6"></script>
+<script src="js/solver.js?v=7"></script>
+<script src="js/stages.js?v=7"></script>
+<script src="js/game.js?v=7"></script>
 </body>
 </html>
