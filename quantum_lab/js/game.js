@@ -323,46 +323,98 @@
 
   const hue = (re, im) => ((Math.atan2(im, re) / Math.PI) * 180 + 360) % 360;
 
+  // ---- 3-D Bloch spheres: one shared camera, drag to rotate (double-click / double-tap to reset)
+  const cam = { yaw: 0.62, pitch: 0.38 };
+  const CAM0 = { yaw: 0.62, pitch: 0.38 };
+  let sphereArea = null;   // { x, y, w, h } of the region holding spheres (set while drawing)
+  let drag = null;
+  function proj(x, y, z) {   // Bloch (x right, y away, z up) -> screen offset in unit-sphere coords + depth (+ = toward viewer)
+    const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw), cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+    const x1 = x * cy - y * sy, y1 = x * sy + y * cy;
+    return { x: x1, y: -(z * cp - y1 * sp), d: -(y1 * cp + z * sp) };
+  }
   function drawBloch(c, cx, cy, r, vec, tvec, label) {
-    const yaw = 0.62, tilt = 0.38;
-    const P = (x, y, z) => {
-      const x1 = x * Math.cos(yaw) - y * Math.sin(yaw), y1 = x * Math.sin(yaw) + y * Math.cos(yaw);
-      return { x: cx + r * x1, y: cy + r * (-z * Math.cos(tilt) + y1 * Math.sin(tilt)), d: -y1 * Math.cos(tilt) + z * Math.sin(tilt) };
-    };
-    c.lineWidth = 1.4;
-    c.strokeStyle = '#3b4d6b'; c.beginPath(); c.arc(cx, cy, r, 0, 7); c.stroke();
-    // equator
+    const P = (x, y, z) => { const p = proj(x, y, z); return { x: cx + r * p.x, y: cy + r * p.y, d: p.d }; };
+    // shaded ball
+    const grd = c.createRadialGradient(cx - r * 0.35, cy - r * 0.4, r * 0.1, cx, cy, r);
+    grd.addColorStop(0, '#2a3d5c'); grd.addColorStop(1, '#121c2c');
+    c.fillStyle = grd; c.beginPath(); c.arc(cx, cy, r, 0, 7); c.fill();
+    c.strokeStyle = '#4b6286'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx, cy, r, 0, 7); c.stroke();
+    // great circles: far half dashed & dim, near half solid
     const ring = (fn, front) => {
-      c.beginPath(); let started = false;
-      for (let a = 0; a <= 64; a++) {
-        const t = (a / 64) * Math.PI * 2, p = fn(t);
-        if ((p.d >= 0) !== front) { started = false; continue; }
-        if (!started) { c.moveTo(p.x, p.y); started = true; } else c.lineTo(p.x, p.y);
+      c.beginPath(); let on = false;
+      for (let a = 0; a <= 90; a++) {
+        const p = fn((a / 90) * Math.PI * 2);
+        if ((p.d >= 0) !== front) { on = false; continue; }
+        if (!on) { c.moveTo(p.x, p.y); on = true; } else c.lineTo(p.x, p.y);
       }
       c.stroke();
     };
-    const eq = (t) => P(Math.cos(t), Math.sin(t), 0), mer = (t) => P(Math.cos(t), 0, Math.sin(t)), mer2 = (t) => P(0, Math.cos(t), Math.sin(t));
-    c.strokeStyle = '#2f4263'; c.setLineDash([3, 4]);
-    for (const f of [eq, mer, mer2]) ring(f, false);
-    c.setLineDash([]); c.strokeStyle = '#4b6286';
-    for (const f of [eq, mer, mer2]) ring(f, true);
-    // axes + labels
-    c.fillStyle = '#9fb3cf'; c.font = `${Math.max(10, r * 0.2)}px system-ui`; c.textAlign = 'center';
-    const lab = (x, y, z, t) => { const p = P(x * 1.22, y * 1.22, z * 1.22); c.fillText(t, p.x, p.y + 4); };
-    lab(0, 0, 1, '|0⟩'); lab(0, 0, -1, '|1⟩'); lab(1, 0, 0, '|+⟩'); lab(-1, 0, 0, '|−⟩'); lab(0, 1, 0, '|+i⟩');
-    // target
-    if (tvec) {
+    const eq = (t) => P(Math.cos(t), Math.sin(t), 0), mxz = (t) => P(Math.cos(t), 0, Math.sin(t)), myz = (t) => P(0, Math.cos(t), Math.sin(t));
+    c.lineWidth = 1; c.setLineDash([3, 4]); c.strokeStyle = '#34496b';
+    for (const f of [eq, mxz, myz]) ring(f, false);
+    c.setLineDash([]); c.strokeStyle = '#5a739c';
+    for (const f of [eq, mxz, myz]) ring(f, true);
+    // axes with labelled poles; far poles drawn first, dim
+    const poles = [[0, 0, 1, '|0⟩', '#8fd0ff'], [0, 0, -1, '|1⟩', '#8fd0ff'], [1, 0, 0, '|+⟩', '#9fb3cf'], [-1, 0, 0, '|−⟩', '#9fb3cf'], [0, 1, 0, '|+i⟩', '#9fb3cf'], [0, -1, 0, '|−i⟩', '#9fb3cf']]
+      .map(([x, y, z, t, col]) => ({ t, col, p: P(x, y, z), q: P(x * 1.2, y * 1.2, z * 1.2) }))
+      .sort((a, b) => a.p.d - b.p.d);
+    const o = P(0, 0, 0);
+    const fs = Math.max(10, r * 0.2);
+    c.font = `${fs}px system-ui`; c.textAlign = 'center';
+    const vecDraw = () => {
+      const len = Math.hypot(vec.x, vec.y, vec.z), p = P(vec.x, vec.y, vec.z);
+      c.strokeStyle = len > 0.98 ? '#ffb703' : '#fb923c'; c.lineWidth = 3.2;
+      c.beginPath(); c.moveTo(o.x, o.y); c.lineTo(p.x, p.y); c.stroke();
+      c.fillStyle = c.strokeStyle; c.beginPath(); c.arc(p.x, p.y, Math.max(4.5, r * 0.08), 0, 7); c.fill();
+      // shadow on the equator plane helps read the 3-D position
+      const sh = P(vec.x, vec.y, 0);
+      c.strokeStyle = '#ffb70355'; c.lineWidth = 1.2; c.setLineDash([2, 3]);
+      c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(sh.x, sh.y); c.stroke(); c.setLineDash([]);
+      c.fillStyle = '#ffb70366'; c.beginPath(); c.arc(sh.x, sh.y, Math.max(2.5, r * 0.04), 0, 7); c.fill();
+    };
+    const tgtDraw = () => {
+      if (!tvec) return;
       const p = P(tvec.x, tvec.y, tvec.z);
-      c.strokeStyle = '#5eead4'; c.lineWidth = 2.5; c.beginPath(); c.arc(p.x, p.y, Math.max(7, r * 0.12), 0, 7); c.stroke();
+      c.strokeStyle = '#5eead4'; c.lineWidth = 2.5; c.beginPath(); c.arc(p.x, p.y, Math.max(8, r * 0.13), 0, 7); c.stroke();
+      c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.moveTo(o.x, o.y); c.lineTo(p.x, p.y); c.stroke(); c.setLineDash([]);
+    };
+    // back-to-front: far poles, then (vector/target if they are far), near poles
+    for (const k of poles) {
+      if (k.p.d >= 0) continue;
+      c.strokeStyle = '#3d5073'; c.lineWidth = 1; c.beginPath(); c.moveTo(o.x, o.y); c.lineTo(k.p.x, k.p.y); c.stroke();
+      c.fillStyle = k.col + '77'; c.fillText(k.t, k.q.x, k.q.y + fs * 0.35);
     }
-    // state vector
-    const len = Math.hypot(vec.x, vec.y, vec.z), p = P(vec.x, vec.y, vec.z), o = P(0, 0, 0);
-    c.strokeStyle = len > 0.98 ? '#ffb703' : '#fb923c'; c.lineWidth = 3; c.lineCap = 'round';
-    c.beginPath(); c.moveTo(o.x, o.y); c.lineTo(p.x, p.y); c.stroke();
-    c.fillStyle = c.strokeStyle; c.beginPath(); c.arc(p.x, p.y, Math.max(4, r * 0.075), 0, 7); c.fill();
+    tgtDraw(); vecDraw();
+    for (const k of poles) {
+      if (k.p.d < 0) continue;
+      c.strokeStyle = '#5a739c'; c.lineWidth = 1; c.beginPath(); c.moveTo(o.x, o.y); c.lineTo(k.p.x, k.p.y); c.stroke();
+      c.fillStyle = k.col; c.fillText(k.t, k.q.x, k.q.y + fs * 0.35);
+    }
+    // title
+    const len = Math.hypot(vec.x, vec.y, vec.z);
     c.fillStyle = '#cfd9e8'; c.font = `600 ${Math.max(11, r * 0.22)}px system-ui`;
-    c.fillText(label + (len < 0.95 ? '(もつれ)' : ''), cx, cy + r + Math.max(16, r * 0.3));
+    c.fillText(label + (len < 0.95 ? '(もつれ)' : ''), cx, cy - r * 1.5);
   }
+
+  // pointer: drag on the sphere area rotates the camera
+  viz.style.cursor = 'grab';
+  viz.addEventListener('pointerdown', (e) => {
+    if (!sphereArea) return;
+    const r = viz.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, a = sphereArea;
+    if (x < a.x || x > a.x + a.w || y < a.y || y > a.y + a.h) return;
+    drag = { x: e.clientX, y: e.clientY, yaw: cam.yaw, pitch: cam.pitch, id: e.pointerId };
+    try { viz.setPointerCapture(e.pointerId); } catch (x2) { /* ignore */ }
+    viz.style.cursor = 'grabbing';
+  });
+  viz.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    cam.yaw = drag.yaw + (e.clientX - drag.x) * 0.012;
+    cam.pitch = clamp(drag.pitch + (e.clientY - drag.y) * 0.012, -1.5, 1.5);
+  });
+  const endCam = () => { drag = null; viz.style.cursor = 'grab'; };
+  viz.addEventListener('pointerup', endCam); viz.addEventListener('pointercancel', endCam);
+  viz.addEventListener('dblclick', () => { cam.yaw = CAM0.yaw; cam.pitch = CAM0.pitch; });
 
   // align the phase of `a` to `b` (global phase is not observable)
   function align(a, b) {
@@ -388,11 +440,14 @@
       const wide = W > 760 && n <= 2;
       const sphA = wide ? { x: 0, y: 0, w: W * 0.5, h: H } : { x: 0, y: 0, w: W, h: n === 1 ? H * 0.58 : H * 0.46 };
       const ampA = wide ? { x: W * 0.5, y: 0, w: W * 0.5, h: H } : { x: 0, y: sphA.h, w: W, h: H - sphA.h };
-      const rad = Math.min(sphA.h * 0.34, (sphA.w / n) * 0.36);
+      sphereArea = sphA;
+      const rad = Math.min(sphA.h * 0.28, (sphA.w / n) * 0.36);
       for (let q = 0; q < n; q++) {
-        const cx = sphA.x + (sphA.w / n) * (q + 0.5), cy = sphA.y + sphA.h * 0.46;
+        const cx = sphA.x + (sphA.w / n) * (q + 0.5), cy = sphA.y + sphA.h * 0.5;
         drawBloch(c, cx, cy, rad, Q.bloch(cur, n, q), Q.bloch(tgt, n, q), `q${q}`);
       }
+      c.fillStyle = '#6f84a3'; c.font = '11px system-ui'; c.textAlign = 'left';
+      c.fillText('ドラッグで回転 / ダブルクリックでリセット', sphA.x + 10, sphA.y + sphA.h - 8);
       // amplitudes
       const al = align(cur, tgt);
       const rows = dim, rh = Math.min(26, (ampA.h - 22) / rows), x0 = ampA.x + 56, wbar = ampA.w - 56 - 70;
@@ -412,6 +467,7 @@
         c.fillStyle = '#cfd9e8'; c.textAlign = 'right'; c.fillText(`${(pr * 100).toFixed(0)}%`, ampA.x + ampA.w - 6, y + rh * 0.68); c.textAlign = 'left';
       }
     } else {
+      sphereArea = null;
       // unitary view: two matrices, target and yours (phase aligned)
       const cols = S.curU, tg = S.tU;
       const flat = (u) => { const a = new Float64Array(2 * dim * dim); for (let j = 0; j < dim; j++) for (let i = 0; i < 2 * dim; i++) a[j * 2 * dim + i] = u[j][i]; return a; };
