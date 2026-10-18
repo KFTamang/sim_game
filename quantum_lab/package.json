@@ -1,0 +1,10 @@
+{
+  "name": "quantum_lab",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Quantum Lab: build quantum circuits with as few gates as possible",
+  "scripts": {
+    "test": "node tests/solver.test.js",
+    "serve": "python3 -m http.server 8000"
+  }
+}
