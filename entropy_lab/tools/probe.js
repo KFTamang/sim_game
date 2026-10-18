@@ -1,0 +1,11 @@
+const E = require('../js/solver.js'), { STAGES } = require('../js/stages.js');
+const st = STAGES[+process.argv[2] - 1 || 0], P = E.makeProblem(st);
+console.log('seq', P.seq.toFixed(3), 'ln bins', Math.log(E.GX * E.GY * E.GA).toFixed(3));
+const mat = new Uint8Array(P.n);
+let r = E.simulate(P, mat, { full: true, tmax: 200 });
+console.log('empty: t90', r.t90, 'final', r.final.toFixed(3), 'start', r.series[0].toFixed(3));
+const disc = (cx, cy, rad, id) => { for (let y = 0; y < P.h; y++) for (let x = 0; x < P.w; x++) if (!P.fixed[y*P.w+x] && P.build[y*P.w+x] && (x+.5-cx)**2+(y+.5-cy)**2 <= rad*rad) mat[y*P.w+x]=id; };
+disc(14, 16.5, 3.2, 1); console.log('disc cost', E.costOf(mat)); r = E.simulate(P, mat, { full: true, tmax: 300 });
+console.log('mirror disc: t90', r.t90, 'final', r.final.toFixed(3), r.series.filter((_, i) => i % 20 === 0).map((v) => v.toFixed(2)).join(' '));
+mat.fill(0); disc(14, 16.5, 1.6, 2); console.log('rough cost', E.costOf(mat)); r = E.simulate(P, mat, { full: true, tmax: 300 });
+console.log('rough disc: t90', r.t90, 'final', r.final.toFixed(3), r.series.filter((_, i) => i % 20 === 0).map((v) => v.toFixed(2)).join(' '));

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entropy Lab — エントロピーは増える</title>
+<link rel="stylesheet" href="style.css?v=2">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VSQQ2718YQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-VSQQ2718YQ');
+</script>
+</head>
+<body>
+<header class="top">
+  <a class="home" href="../index.html" title="ゲーム一覧へ">← sim_game</a>
+  <h1>Entropy Lab</h1>
+  <nav id="stageTabs" class="tabs" aria-label="ステージ"></nav>
+  <button id="shareTop" class="share top-share" hidden>𝕏 でスコアを投稿</button>
+  <a class="help" href="#" id="helpBtn">遊び方</a>
+</header>
+
+<main class="layout">
+  <section class="stagewrap">
+    <canvas id="cv" aria-label="粒子の箱"></canvas>
+    <div id="toast" class="toast" hidden></div>
+    <div class="hint" id="hint">ドラッグで壁を塗る(右クリックで消す / Shiftで直線)</div>
+  </section>
+
+  <aside class="panel">
+    <div class="card goal">
+      <div class="row"><span class="lbl">ステージ</span><b id="stageName"></b></div>
+      <p id="stageBrief" class="small"></p>
+      <div class="meter">
+        <div class="meterhead"><span>エントロピー 90% までの時間</span><span><b id="tVal">—</b> <span class="dim">/ 上限 <span id="tLim"></span></span></span></div>
+        <div class="bar"><div id="tBar"></div></div>
+      </div>
+      <div class="meter">
+        <div class="meterhead"><span>材料コスト</span><span><b id="costVal">0</b> <span class="dim">/ 予算 <span id="budVal"></span></span></span></div>
+        <div class="bar"><div id="costBar"></div></div>
+      </div>
+      <div class="row big"><span class="lbl">スコア</span><b id="scoreVal">—</b></div>
+      <div class="row small"><span class="lbl">ベスト</span><span id="bestVal">—</span></div>
+      <p id="status" class="status"></p>
+    </div>
+
+    <div class="card">
+      <h2>エントロピー S(t)</h2>
+      <canvas id="plot" height="150" aria-label="エントロピーの時間変化"></canvas>
+      <p class="small dim" id="plotNote">灰色の線 = いまの設計の予測。黄色の線 = 実行中の実測。</p>
+      <div class="btns">
+        <button id="runBtn" class="primary2">▶ 実行</button>
+        <button id="revBtn" title="すべての粒子の速度を反対向きにする">⏪ 時間反転</button>
+        <button id="resetBtn">⏮ 最初から</button>
+      </div>
+      <div class="seg" id="speedSeg"></div>
+    </div>
+
+    <div class="card">
+      <h2>壁の材料</h2>
+      <div class="seg mat" id="matSeg"></div>
+      <p class="small dim" id="matInfo"></p>
+      <div class="seg" id="brushSeg"></div>
+      <div class="chk">
+        <label><input type="checkbox" id="chkBins"> 集計マス(エントロピーの数え方)</label>
+      </div>
+      <div class="btns">
+        <button id="undoBtn" title="Ctrl+Z">元に戻す</button>
+        <button id="redoBtn" title="Ctrl+Y">やり直し</button>
+        <button id="clearBtn">全消去</button>
+      </div>
+      <button id="submitBtn" class="primary" disabled>✔ 提出してスコア確定</button>
+    </div>
+
+    <div class="card" id="reportCard" hidden>
+      <h2>結果</h2>
+      <div id="report" class="small"></div>
+      <button id="shareBtn" class="share">𝕏 でスコアを投稿</button>
+    </div>
+  </aside>
+</main>
+
+<dialog id="helpDlg">
+  <h2>遊び方</h2>
+  <ul>
+    <li>左から、ほぼ平行な粒子のビームを打ち込みます。すべて同じ場所・同じ向きなので、<b>とても秩序だった(エントロピーが低い)状態</b>です。</li>
+    <li>箱を「位置のマス × 向き」に区切り、粒子の分布の乱雑さを <b>S = −Σ p ln p</b> で数えます(100% = 完全に混ざった状態)。</li>
+    <li>壁を塗って粒子を散らし、<b>S が 90% に届くまでの時間</b>を短くしよう。短いほど高得点(スコア = 1000 × 基準時間 ÷ あなたの時間)。</li>
+    <li><b>鏡</b>: 反射するだけ。<b>丸い</b>鏡は、ほんの少し違う向きの粒子を大きく違う向きへ散らします(カオス)。平らな壁だけでは混ざりません。</li>
+    <li><b>ざらざらの壁</b>: 当たった粒子は来た向きを忘れて、ランダムな向きに飛び出します(高コスト)。</li>
+    <li>「▶ 実行」で実際の動きを見られます。実行中に「⏪ 時間反転」を押すと、全粒子の向きが逆になります。鏡だけの世界(完全に可逆な法則)なら来た道を逆にたどって元のビームに戻りますが、ざらざらの壁があると戻れません。</li>
+    <li>スマホ: <b>2本指のピンチで拡大</b>、「⤢ 全体表示」で元に戻せます。</li>
+  </ul>
+  <form method="dialog"><button class="primary">はじめる</button></form>
+</dialog>
+
+<script src="js/solver.js?v=2"></script>
+<script src="js/stages.js?v=2"></script>
+<script src="../common/zoom.js"></script>
+<script src="js/game.js?v=2"></script>
+</body>
+</html>
