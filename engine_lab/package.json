@@ -1,0 +1,10 @@
+{
+  "name": "engine_lab",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Engine Lab: tune a four-stroke engine cycle for efficiency",
+  "scripts": {
+    "test": "node tests/solver.test.js",
+    "serve": "python3 -m http.server 8000"
+  }
+}

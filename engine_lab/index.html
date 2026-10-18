@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engine Lab — 内燃機関の熱サイクル</title>
+<link rel="stylesheet" href="style.css?v=2">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VSQQ2718YQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-VSQQ2718YQ');
+</script>
+</head>
+<body>
+<header class="top">
+  <a class="home" href="../index.html" title="ゲーム一覧へ">← sim_game</a>
+  <h1>Engine Lab</h1>
+  <nav id="stageTabs" class="tabs" aria-label="ステージ"></nav>
+  <button id="shareTop" class="share top-share" hidden>𝕏 でスコアを投稿</button>
+  <a class="help" href="#" id="helpBtn">遊び方</a>
+</header>
+
+<main class="layout">
+  <section class="stagewrap">
+    <canvas id="cv" aria-label="シリンダーとP-V線図"></canvas>
+    <div id="toast" class="toast" hidden></div>
+      </section>
+
+  <aside class="panel">
+    <div class="card goal">
+      <div class="row"><span class="lbl">ステージ</span><b id="stageName"></b></div>
+      <p id="stageBrief" class="small"></p>
+      <div class="meter">
+        <div class="meterhead"><span id="objLbl">熱効率</span><span><b id="objVal">—</b> <span class="dim" id="objSub"></span></span></div>
+        <div class="bar"><div id="objBar"></div></div>
+      </div>
+      <div class="meter">
+        <div class="meterhead"><span>ノッキング度(100%でノック)</span><span><b id="knockVal">—</b></span></div>
+        <div class="bar"><div id="knockBar"></div><i id="knockMark"></i></div>
+      </div>
+      <div class="row big"><span class="lbl">スコア</span><b id="scoreVal">—</b></div>
+      <div class="row small"><span class="lbl">ベスト</span><span id="bestVal">—</span></div>
+      <p id="status" class="status"></p>
+    </div>
+
+    <div class="card">
+      <h2>エンジンの設定</h2>
+      <div id="sliders"></div>
+      <p class="small dim" id="fixedInfo"></p>
+      <div class="btns">
+        <button id="playBtn">⏸ 停止</button>
+        <button id="resetBtn">初期値に戻す</button>
+      </div>
+      <button id="submitBtn" class="primary" disabled>✔ 提出してスコア確定</button>
+    </div>
+
+    <div class="card">
+      <h2>燃料エネルギーの行方</h2>
+      <div id="energyBar" class="ebar"></div>
+      <div id="energyLegend" class="elegend small"></div>
+      <div id="numbers" class="small dim"></div>
+    </div>
+
+    <div class="card" id="reportCard" hidden>
+      <h2>結果</h2>
+      <div id="report" class="small"></div>
+      <button id="shareBtn" class="share">𝕏 でスコアを投稿</button>
+    </div>
+  </aside>
+</main>
+
+<dialog id="helpDlg">
+  <h2>遊び方</h2>
+  <ul>
+    <li>4ストロークエンジン(吸気 → 圧縮 → 燃焼・膨張 → 排気)の1気筒。スライダーで設定を決めると、シリンダーの動きと<b>P-V線図</b>が変わります。</li>
+    <li><b>P-V線図の囲まれた面積 = 1サイクルで取り出せる仕事</b>。燃料のエネルギーのうち、仕事になる割合が<b>熱効率</b>です。</li>
+    <li>ステージごとに動かせるパラメータが決まっています。目標(熱効率 または トルク)をできるだけ高くしよう。</li>
+    <li><b>ノッキング</b>(未燃ガスの自己着火)が起きると失格(スコア0)。「ノッキング度」のバーが赤い線(100%)に届かないように。</li>
+    <li>圧縮比を上げると効率は上がる、でもノッキングしやすくなる。点火が早すぎ/遅すぎ、バルブの開閉、過給にも、それぞれ得と損があります。</li>
+    <li>「燃料エネルギーの行方」で、ロスがどこに出ているか見られます(冷却損失・排気熱・摩擦・ポンプ損失)。</li>
+    <li>スコア = 目標値を、基準(0点)と最高(1000点)の間で換算したもの。</li>
+  </ul>
+  <form method="dialog"><button class="primary">はじめる</button></form>
+</dialog>
+
+<script src="js/solver.js?v=2"></script>
+<script src="js/stages.js?v=2"></script>
+<script src="js/game.js?v=2"></script>
+</body>
+</html>
