@@ -61,6 +61,8 @@
   }
   function updateView() {
     S.cur = Q.run(S.st.n, S.gates, S.step);
+    // unitary stages: the grid shows the operation made by the columns up to the chosen step
+    S.viewU = S.st.kind === 'unitary' ? Q.unitary(S.st.n, S.gates.filter((g) => g.c <= S.step)) : null;
   }
 
   function scoreNow() {
@@ -460,7 +462,7 @@
     } else {
       sphereArea = null;
       // unitary view: two matrices, target and yours (phase aligned)
-      const cols = S.curU, tg = S.tU;
+      const cols = S.viewU, tg = S.tU;
       const flat = (u) => { const a = new Float64Array(2 * dim * dim); for (let j = 0; j < dim; j++) for (let i = 0; i < 2 * dim; i++) a[j * 2 * dim + i] = u[j][i]; return a; };
       const fy = flat(cols), ft = flat(tg), fa = align(fy, ft);
       const area = Math.min(H - 110, W / 2 - 60), cell = area / dim;
