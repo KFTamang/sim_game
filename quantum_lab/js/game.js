@@ -139,13 +139,13 @@
     const d = GDOC[t], g = Q.GATES[t];
     $('matInfo').innerHTML = `<b style="color:${TOOLCOL[t]}">${d[0]}</b>　<span class="dim">コスト ${g.cost}</span><br>${d[1]}<br><span class="dim">${d[2]}</span>`;
   }
+  $('matSeg').addEventListener('click', (e) => { const b = e.target.closest('.gbtn'); if (b && b.dataset.t) showGate(b.dataset.t); });
   function buildPalette() {   // gate list: click one to read about it (gates are placed from the drop-downs in the circuit)
     const ms = $('matSeg'); ms.innerHTML = '';
     S.st.gates.forEach((t) => {
       const g = Q.GATES[t], b = document.createElement('button');
       b.className = 'gbtn legend'; b.dataset.t = t;
       b.innerHTML = `<b style="color:${TOOLCOL[t]}">${gname(t)}</b><span class="dim">コスト${g.cost}</span>`;
-      b.onclick = () => showGate(t);
       ms.appendChild(b);
     });
     showGate(S.st.gates.includes(S.sel) ? S.sel : S.st.gates[0]);
