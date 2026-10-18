@@ -28,9 +28,9 @@ test('magnetic circuit: a return path is needed; a short-circuiting yoke next to
   const st = STAGES[0], P = M.makeProblem(st);
   const rect = (m, x0, y0, x1, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (!P.fixed[y * P.w + x]) m[y * P.w + x] = 1; };
   const run = (fn) => { const m = new Uint8Array(P.n); fn(m); return M.solve(P, m).bzone; };
-  const open = run((m) => { rect(m, 9, 12, 19, 17); rect(m, 22, 12, 25, 17); });
-  const loop = run((m) => { rect(m, 9, 12, 19, 17); rect(m, 22, 12, 25, 17); rect(m, 23, 18, 25, 23); rect(m, 2, 22, 25, 23); rect(m, 2, 21, 3, 21); });
-  const shorted = run((m) => { rect(m, 9, 12, 19, 17); rect(m, 22, 12, 25, 17); rect(m, 23, 18, 25, 23); rect(m, 2, 22, 25, 23); rect(m, 2, 21, 3, 21); rect(m, 9, 18, 19, 21); });
+  const open = run((m) => { rect(m, 17, 20, 27, 25); rect(m, 30, 20, 33, 25); });
+  const loop = run((m) => { rect(m, 17, 20, 27, 25); rect(m, 30, 20, 33, 25); rect(m, 31, 26, 33, 31); rect(m, 10, 30, 33, 31); rect(m, 10, 29, 11, 29); });
+  const shorted = run((m) => { rect(m, 17, 20, 27, 25); rect(m, 30, 20, 33, 25); rect(m, 31, 26, 33, 31); rect(m, 10, 30, 33, 31); rect(m, 10, 29, 11, 29); rect(m, 17, 26, 27, 29); });
   assert(loop > open * 3, `loop ${loop} vs open ${open}`);
   assert(shorted < loop * 0.7, `shorted ${shorted} vs loop ${loop}`);
 });
@@ -47,7 +47,7 @@ test('iron saturates: B in iron stays physical (< 2.4 T) even with a strong magn
 
 test('a closed iron shell shields; thicker is better; nesting beats one shell of equal iron', () => {
   const st = STAGES[1], P = M.makeProblem(st), ref = M.reference(P);
-  const ring = (mat, rin, rout) => { for (let y = 0; y < 40; y++) for (let x = 0; x < 48; x++) { const r = Math.max(Math.abs(x - 23.5), Math.abs(y - 19.5)); if (r <= rout && r > rin) mat[y * 48 + x] = 1; } };
+  const ring = (mat, rin, rout) => { for (let y = 0; y < P.h; y++) for (let x = 0; x < P.w; x++) { const r = Math.max(Math.abs(x - (P.w - 1) / 2), Math.abs(y - (P.h - 1) / 2)); if (r <= rout && r > rin) mat[y * P.w + x] = 1; } };
   const sh = (fn) => { const m = new Uint8Array(P.n); fn(m); return { f: ref / M.solve(P, m).bzone, c: M.costOf(P, m) }; };
   const one2 = sh((m) => ring(m, 6.5, 8.5)), one3 = sh((m) => ring(m, 5.5, 8.5));
   const nested = sh((m) => { ring(m, 7.5, 8.5); ring(m, 3.5, 4.5); });
@@ -60,7 +60,7 @@ test('Halbach-style rotation puts the field on one side only', () => {
   const [bx0, , bx1] = st.build;
   const pat = [M.MAG_R, M.MAG_U, M.MAG_L, M.MAG_D];
   const m = new Uint8Array(P.n);
-  for (let x = bx0; x <= bx1; x++) for (const y of [16, 17]) m[y * P.w + x] = pat[Math.floor((x - bx0) / 4) % 4];
+  for (let x = bx0; x <= bx1; x++) for (const y of [24, 25]) m[y * P.w + x] = pat[Math.floor((x - bx0) / 4) % 4];
   const r = M.solve(P, m);
   assert(r.bzone / r.bzone2 > 4, `ratio ${r.bzone / r.bzone2}`);
 });
@@ -68,7 +68,7 @@ test('Halbach-style rotation puts the field on one side only', () => {
 test('solver is fast enough to run live', () => {
   const P = M.makeProblem(STAGES[1]);
   const m = new Uint8Array(P.n);
-  for (let y = 0; y < 40; y++) for (let x = 0; x < 48; x++) { const r = Math.max(Math.abs(x - 23.5), Math.abs(y - 19.5)); if ((r <= 8.5 && r > 7.5) || (r <= 4.5 && r > 3.5)) m[y * 48 + x] = 1; }
+  for (let y = 0; y < P.h; y++) for (let x = 0; x < P.w; x++) { const r = Math.max(Math.abs(x - (P.w - 1) / 2), Math.abs(y - (P.h - 1) / 2)); if ((r <= 8.5 && r > 7.5) || (r <= 4.5 && r > 3.5)) m[y * P.w + x] = 1; }
   const t0 = Date.now(); M.solve(P, m); const dt = Date.now() - t0;
   assert(dt < 400, `${dt} ms`);
 });

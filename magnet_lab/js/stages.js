@@ -24,6 +24,15 @@
       target: 0.06, budget: 240, minRatio: 3, scoreRef: 0.0004,
       brief: '磁石を自由に並べ、上の測定ゾーンにだけ強い磁場を作ろう(下側の漏れの2.5倍以上)。磁石の向きをどう並べれば磁束が片側に集まる?(ハルバッハ配列)' },
   ];
+  // Extra air around every stage (the outer box is a flux-parallel wall, so more air = less
+  // wall influence on the field near the magnets). Everything is shifted by PAD cells.
+  const PAD = 8;
+  for (const st of STAGES) {
+    const sh = (r) => [r[0] + PAD, r[1] + PAD, r[2] + PAD, r[3] + PAD].concat(r.slice(4));
+    st.w += 2 * PAD; st.h += 2 * PAD;
+    if (st.fixed) st.fixed = st.fixed.map(sh);
+    for (const k of ['zone', 'zone2', 'build']) if (st[k]) st[k] = sh(st[k]);
+  }
   const api = { STAGES };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.MagStages = api;
