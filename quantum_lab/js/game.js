@@ -410,7 +410,7 @@
   viz.addEventListener('pointermove', (e) => {
     if (!drag) return;
     cam.yaw = drag.yaw + (e.clientX - drag.x) * 0.012;
-    cam.pitch = clamp(drag.pitch + (e.clientY - drag.y) * 0.012, -1.5, 1.5);
+    cam.pitch = clamp(drag.pitch - (e.clientY - drag.y) * 0.012, -1.5, 1.5);
   });
   const endCam = () => { drag = null; viz.style.cursor = 'grab'; };
   viz.addEventListener('pointerup', endCam); viz.addEventListener('pointercancel', endCam);
