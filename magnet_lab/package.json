@@ -1,0 +1,10 @@
+{
+  "name": "magnet_lab",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Magnet Lab: shape iron and magnets to steer magnetic flux",
+  "scripts": {
+    "test": "node tests/solver.test.js",
+    "serve": "python3 -m http.server 8000"
+  }
+}
