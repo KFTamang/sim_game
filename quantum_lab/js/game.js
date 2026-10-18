@@ -42,8 +42,7 @@
     const saved = S.saved.designs[st.id];
     S.gates = saved ? saved.map((g) => ({ ...g })) : [];
     S.undo = []; S.redo = []; S.pending = null; S.submitted = false;
-    S.tool = st.gates[0];
-    S.step = st.cols - 1;
+        S.step = st.cols - 1;
     $('reportCard').hidden = true; $('shareTop').hidden = true;
     buildPalette(); buildTabs();
     recalc();
@@ -89,7 +88,7 @@
     $('bestVal').textContent = best ? `${best.score}(コスト ${best.cost})` : '—';
     const el = $('status');
     let cls = '', msg;
-    if (S.gates.length === 0) msg = '下の回路にゲートを置こう。ゲートを選んで空きマスをタップ。';
+    if (S.gates.length === 0) msg = '下の回路のマスをタップして、ゲートをメニューから選ぼう。';
     else if (S.fid < PASS) msg = `まだ一致していません(${(S.fid * 100).toFixed(1)}%)。球の向き(水色の輪が目標)を見て、足りない回転を考えよう。`;
     else if (S.cost > S.parCost) { cls = 'ok'; msg = `一致! コスト ${S.cost}。もっと少ないゲートで作れる(目安 ${S.parCost})。`; }
     else { cls = 'ok'; msg = '一致!(最小コスト)。「提出」で記録できます。'; }
@@ -120,28 +119,17 @@
   }
 
   const TOOLCOL = { H: '#3aa0ff', X: '#ff7a59', Y: '#e879f9', Z: '#4ade80', S: '#fbbf24', Sdg: '#fbbf24', T: '#f59e0b', Tdg: '#f59e0b', CNOT: '#a78bfa', CZ: '#a78bfa', SWAP: '#a78bfa' };
-  function buildPalette() {
+  const gname = (t) => (t === 'CNOT' || t === 'CZ' || t === 'SWAP' ? t : Q.GATES[t].label);
+  function buildPalette() {   // legend only: gates are chosen from the drop-down in each circuit cell
     const ms = $('matSeg'); ms.innerHTML = '';
     S.st.gates.forEach((t) => {
-      const g = Q.GATES[t];
-      const b = document.createElement('button');
-      b.className = 'gbtn';
-      b.innerHTML = `<b style="color:${TOOLCOL[t]}">${t === 'CNOT' ? 'CNOT' : g.label}</b><span class="dim">コスト${g.cost}</span>`;
-      b.dataset.t = t;
-      b.onclick = () => { S.tool = t; S.pending = null; refreshPalette(); drawCircuit(); };
+      const g = Q.GATES[t], b = document.createElement('div');
+      b.className = 'gbtn legend';
+      b.title = g.name;
+      b.innerHTML = `<b style="color:${TOOLCOL[t]}">${gname(t)}</b><span class="dim">コスト${g.cost}</span>`;
       ms.appendChild(b);
     });
-    const er = document.createElement('button');
-    er.className = 'gbtn'; er.dataset.t = 'erase'; er.innerHTML = '<b>🗑</b><span class="dim">消す</span>';
-    er.onclick = () => { S.tool = 'erase'; S.pending = null; refreshPalette(); drawCircuit(); };
-    ms.appendChild(er);
-    refreshPalette();
-  }
-  function refreshPalette() {
-    document.querySelectorAll('#matSeg button').forEach((b) => b.classList.toggle('on', b.dataset.t === S.tool));
-    const g = Q.GATES[S.tool];
-    $('matInfo').textContent = S.tool === 'erase' ? '消したいゲートをタップ。'
-      : `${g.name}${g.qubits === 2 ? ' — 同じ列の2マスを「制御 → 標的」の順にタップ' : ''}`;
+    $('matInfo').textContent = '回路の各マスをタップ(クリック)するとメニューが開き、ゲートを選べます。CNOT / CZ / SWAP は「→ q番号」で相手の線を指定します。';
   }
 
   // ------------------------------------------------------------------ circuit editor (SVG)
@@ -152,7 +140,8 @@
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
     svg.style.aspectRatio = `${W} / ${H}`;
     const parts = [];
-    // column headers (tap to set the step)
+    // header: press / drag to choose how far to look ("入力" = before any gate)
+    parts.push(`<rect x="3" y="2" width="${LBL - 8}" height="20" rx="6" fill="${S.step < 0 ? '#ffb70333' : '#1d2b40'}" stroke="${S.step < 0 ? '#ffb703' : '#2a3a54'}"/><text x="${LBL / 2 - 2}" y="16" text-anchor="middle" font-size="12" fill="${S.step < 0 ? '#ffb703' : '#8fa3bd'}" pointer-events="none">入力</text>`);
     for (let c = 0; c < cols; c++) {
       const x = LBL + c * CW + CW / 2, on = c === S.step;
       parts.push(`<rect x="${LBL + c * CW + 3}" y="2" width="${CW - 6}" height="20" rx="6" fill="${on ? '#ffb70333' : '#1d2b40'}" stroke="${on ? '#ffb703' : '#2a3a54'}" data-step="${c}"/>`);
@@ -167,11 +156,12 @@
     // step marker line
     const sx = LBL + (S.step + 1) * CW;
     if (S.step < cols - 1) parts.push(`<line x1="${sx}" y1="${TOP - 2}" x2="${sx}" y2="${H - 2}" stroke="#ffb703" stroke-width="2" stroke-dasharray="4 3"/>`);
-    // empty cells (hit targets)
+    // empty cells: a dashed slot with a "+" (the drop-down sits on top)
     for (let c = 0; c < cols; c++) for (let q = 0; q < n; q++) {
       const occ = S.gates.some((g) => g.c === c && (g.q === q || g.k === q));
-      const pend = S.pending && S.pending.c === c && S.pending.q === q;
-      parts.push(`<rect x="${LBL + c * CW + 4}" y="${TOP + q * RH + 6}" width="${CW - 8}" height="${RH - 12}" rx="8" fill="${pend ? '#ffb70333' : (occ ? 'none' : '#ffffff08')}" stroke="${pend ? '#ffb703' : (occ ? 'none' : '#ffffff18')}" stroke-dasharray="${pend ? '' : '3 3'}" data-c="${c}" data-q="${q}"/>`);
+      if (occ) continue;
+      parts.push(`<rect x="${LBL + c * CW + 4}" y="${TOP + q * RH + 6}" width="${CW - 8}" height="${RH - 12}" rx="8" fill="#ffffff08" stroke="#ffffff30" stroke-dasharray="3 3"/>`);
+      parts.push(`<text x="${LBL + c * CW + CW / 2}" y="${TOP + q * RH + RH / 2 + 5}" text-anchor="middle" font-size="16" fill="#ffffff55">▾</text>`);
     }
     // gates
     const cx = (c) => LBL + c * CW + CW / 2, cy = (q) => TOP + q * RH + RH / 2;
@@ -197,14 +187,73 @@
       parts.push(s + '</g>');
     }
     svg.innerHTML = parts.join('');
+    buildSelects(W, H);
   }
 
+  // one drop-down per circuit cell (transparent, laid over the SVG)
+  function cellValue(c, q) {
+    const g = S.gates.find((x) => x.c === c && (x.q === q || x.k === q));
+    if (!g) return '';
+    if (Q.GATES[g.type].qubits === 1) return g.type;
+    return g.k === q ? `${g.type}:${g.q}` : '@';
+  }
+  function buildSelects(W, H) {
+    const wrap = $("circuitInner");
+    let layer = $('cellLayer');
+    if (!layer) { layer = document.createElement('div'); layer.id = 'cellLayer'; wrap.appendChild(layer); }
+    layer.innerHTML = '';
+    const st = S.st, n = st.n;
+    for (let c = 0; c < st.cols; c++) for (let q = 0; q < n; q++) {
+      const sel = document.createElement('select');
+      sel.setAttribute('aria-label', `列${c + 1} q${q}`);
+      sel.style.left = `${((LBL + c * CW + 3) / W) * 100}%`;
+      sel.style.top = `${((TOP + q * RH + 4) / H) * 100}%`;
+      sel.style.width = `${((CW - 6) / W) * 100}%`;
+      sel.style.height = `${((RH - 8) / H) * 100}%`;
+      const add = (v, label, dis) => { const o = document.createElement('option'); o.value = v; o.textContent = label; if (dis) o.disabled = true; sel.appendChild(o); };
+      add('', '— (なし)');
+      for (const t of st.gates) {
+        const gt = Q.GATES[t];
+        if (gt.qubits === 1) add(t, `${gname(t)}(${gt.name.split('(')[0]})`);
+        else for (let o = 0; o < n; o++) if (o !== q) add(`${t}:${o}`, `${gname(t)} → q${o}`);
+      }
+      const cur = cellValue(c, q);
+      if (cur === '@') add('@', '(相手側のマス)', true);
+      sel.value = cur;
+      sel.onchange = () => setCell(c, q, sel.value);
+      layer.appendChild(sel);
+    }
+  }
+  function setCell(c, q, v) {
+    stopPlay();
+    const cur = cellValue(c, q);
+    if (v === cur || v === '@') return;
+    commit(() => {
+      removeAt(c, q);
+      if (v === '') return;
+      if (v.includes(':')) { const [type, o] = v.split(':'); const t = +o; removeAt(c, t); S.gates.push({ c, type, q: t, k: q }); }
+      else S.gates.push({ c, type: v, q });
+    });
+  }
+
+  // Choose how far to view the circuit: press / drag along the numbered header (or the wire area).
+  let dragStep = false;
+  function stepFromEvent(e) {
+    const r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal;
+    const x = ((e.clientX - r.left) / r.width) * vb.width;
+    return clamp(Math.floor((x - LBL) / CW), -1, S.st.cols - 1);
+  }
   svg.addEventListener('pointerdown', (e) => {
-    const t = e.target;
-    if (t.dataset && t.dataset.step !== undefined) { stopPlay(); S.step = +t.dataset.step; updateView(); updatePanel(); drawCircuit(); return; }
-    if (!t.dataset || t.dataset.c === undefined) return;
-    cellTap(+t.dataset.c, +t.dataset.q);
+    const r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal;
+    const y = ((e.clientY - r.top) / r.height) * vb.height;
+    if (y > TOP - 2) return;   // below the header: the drop-downs handle it
+    dragStep = true; stopPlay();
+    try { svg.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ }
+    const t = stepFromEvent(e); if (t !== S.step) setStep(t);
   });
+  svg.addEventListener('pointermove', (e) => { if (!dragStep) return; const t = stepFromEvent(e); if (t !== S.step) setStep(t); });
+  const endDrag = () => { dragStep = false; };
+  svg.addEventListener('pointerup', endDrag); svg.addEventListener('pointercancel', endDrag);
 
   function removeAt(c, q) {
     const before = S.gates.length;
@@ -217,18 +266,6 @@
     $('reportCard').hidden = true; $('shareTop').hidden = true;
     recalc();
   }
-  function cellTap(c, q) {
-    stopPlay();
-    if (S.tool === 'erase') { if (S.gates.some((g) => g.c === c && (g.q === q || g.k === q))) commit(() => removeAt(c, q)); return; }
-    const gt = Q.GATES[S.tool];
-    if (gt.qubits === 1) { commit(() => { removeAt(c, q); S.gates.push({ c, type: S.tool, q }); }); return; }
-    // two-qubit gate: control first, then target on the same column
-    if (!S.pending || S.pending.c !== c) { S.pending = { c, q }; drawCircuit(); toast('もう1マス(同じ列の別の線)をタップして標的を決めよう'); return; }
-    if (S.pending.q === q) { S.pending = null; drawCircuit(); return; }
-    const k = S.pending.q;
-    commit(() => { removeAt(c, k); removeAt(c, q); S.gates.push({ c, type: S.tool, q, k }); });
-  }
-
   function undo() { if (!S.undo.length) return; S.redo.push(S.gates.map((g) => ({ ...g }))); S.gates = S.undo.pop(); S.pending = null; recalc(); }
   function redo() { if (!S.redo.length) return; S.undo.push(S.gates.map((g) => ({ ...g }))); S.gates = S.redo.pop(); S.pending = null; recalc(); }
   $('undoBtn').onclick = undo; $('redoBtn').onclick = redo;
@@ -252,8 +289,6 @@
     else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
     else if (e.key === 'ArrowLeft') { stopPlay(); setStep(S.step - 1); }
     else if (e.key === 'ArrowRight') { stopPlay(); setStep(S.step + 1); }
-    else if (e.key.toLowerCase() === 'e') { S.tool = 'erase'; refreshPalette(); }
-    else if (/^[1-9]$/.test(e.key) && +e.key <= S.st.gates.length) { S.tool = S.st.gates[+e.key - 1]; S.pending = null; refreshPalette(); drawCircuit(); }
   });
 
   // ------------------------------------------------------------------ visualisation (canvas)
@@ -437,5 +472,5 @@
   selectStage(0);
   requestAnimationFrame(frame);
   if (!S.saved.seenHelp) { S.saved.seenHelp = true; persist(); try { $('helpDlg').showModal(); } catch (e) { /* ignore */ } }
-  window.__quantum = { S, Q, selectStage, recalc, cellTap };
+  window.__quantum = { S, Q, selectStage, recalc, setCell, setStep };
 })();

@@ -29,7 +29,7 @@
       <canvas id="viz" aria-label="量子状態の表示"></canvas>
       <div id="toast" class="toast" hidden></div>
     </div>
-    <div id="circuitWrap"><svg id="circuit" aria-label="量子回路"></svg></div>
+    <div id="circuitWrap"><div id="circuitInner"><svg id="circuit" aria-label="量子回路"></svg></div></div>
   </section>
 
   <aside class="panel">
@@ -86,11 +86,11 @@
   <ul>
     <li>量子ビットは<b>ブロッホ球</b>の向き。北極 = |0⟩、南極 = |1⟩、赤道 = 「半々の重ね合わせ」で、経度が<b>位相</b>。</li>
     <li>下の回路にゲートを置いて、目標の状態(水色の輪・枠)に合わせよう。回路は<b>左から右へ</b>順に適用される。</li>
-    <li>ゲートを選んで空きマスをタップ。<b>2ビットゲートは「制御」→「標的」の順に同じ列の2マスをタップ</b>。消しゴムで削除。</li>
+    <li>回路のマスをタップすると<b>プルダウンメニュー</b>が開くので、ゲート(H, X, …)を選ぶ。<b>2ビットゲートは「CNOT → q1」のように相手の線を選ぶ</b>(そのマスが制御、相手が標的)。「— (なし)」で削除。</li>
     <li>ステージによっては「目標の回路」ではなく<b>目標の動作</b>(ゲートの代わり)を、限られたゲートで作る。右の行列が一致すればOK。</li>
     <li>2ビットが<b>もつれる</b>と、各ビットの矢印は球の中心へ縮む(片方だけ見ると向きが決まらない)。</li>
     <li>全体の位相(global phase)は無視。コスト: H・X・Y・Z・S = 1、T = 2、CNOT・CZ = 2、SWAP = 3。スコア = 1000 × 最小コスト ÷ あなたのコスト。</li>
-    <li>列の番号をタップ(または ◀▶)で、途中の状態を見られます。</li>
+    <li>列の番号(「入力」〜最終列)をクリック、または上でドラッグ(または ◀▶)すると、その列までの途中の状態を見られます。</li>
   </ul>
   <form method="dialog"><button class="primary">はじめる</button></form>
 </dialog>
