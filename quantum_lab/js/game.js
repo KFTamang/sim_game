@@ -120,16 +120,35 @@
 
   const TOOLCOL = { H: '#3aa0ff', X: '#ff7a59', Y: '#e879f9', Z: '#4ade80', S: '#fbbf24', Sdg: '#fbbf24', T: '#f59e0b', Tdg: '#f59e0b', CNOT: '#a78bfa', CZ: '#a78bfa', SWAP: '#a78bfa' };
   const gname = (t) => (t === 'CNOT' || t === 'CZ' || t === 'SWAP' ? t : Q.GATES[t].label);
-  function buildPalette() {   // legend only: gates are chosen from the drop-down in each circuit cell
+  const GDOC = {
+    H: ['H(アダマール)', 'ブロッホ球を「X軸とZ軸の真ん中の軸」まわりに180°回す。|0⟩(北極)→|+⟩(赤道)のように、確定した状態を50:50の重ね合わせに変え、逆に重ね合わせを確定状態に戻す。H を2回かけると元に戻る。基底(Z軸とX軸)の入れ替えにも使う: H X H = Z。', '行列 (1/√2)[[1,1],[1,−1]]'],
+    X: ['X(NOT)', 'X軸まわりに180°回す。|0⟩と|1⟩を入れ替える古典の NOT。確率だけでなく位相の向きも反転して見える(Y軸成分・Z軸成分の符号が逆になる)。', '行列 [[0,1],[1,0]]'],
+    Y: ['Y', 'Y軸まわりに180°回す。|0⟩と|1⟩を入れ替えつつ位相も付く(X と Z を合わせたもの、位相を除く)。', '行列 [[0,−i],[i,0]]'],
+    Z: ['Z(位相反転)', 'Z軸まわりに180°回す。|0⟩はそのまま、|1⟩の符号だけ −1。確率は変わらないが、|+⟩と|−⟩が入れ替わる(赤道上で反対側へ)。', '行列 [[1,0],[0,−1]]'],
+    S: ['S', 'Z軸まわりに90°回す(|1⟩の位相に i)。|+⟩ → |+i⟩。S を2回かけると Z。', '行列 [[1,0],[0,i]]'],
+    Sdg: ['S†', 'S の逆。Z軸まわりに −90°回す。S と並べると打ち消し合う。', '行列 [[1,0],[0,−i]]'],
+    T: ['T', 'Z軸まわりに45°回す(S の半分)。T を2回で S、4回で Z。誤り耐性のある量子計算では作るのが高価なので、ここでもコストは 2。', '行列 [[1,0],[0,e^{iπ/4}]]'],
+    Tdg: ['T†', 'T の逆(−45°)。コストは T と同じ 2。', '行列 [[1,0],[0,e^{−iπ/4}]]'],
+    CNOT: ['CNOT(制御NOT)', '制御ビット(●)が |1⟩ のときだけ、標的ビット(⊕)を X で反転する。制御ビットが重ね合わせだと、2つのビットが「もつれ」る(H + CNOT でベル状態)。プルダウンで「CNOT → q番号」と選ぶと、選んだ線が制御、番号の線が標的。', '|c,t⟩ → |c, t⊕c⟩'],
+    CZ: ['CZ(制御Z)', '両方のビットが |1⟩ のときだけ符号を −1 にする。どちらを制御と呼んでも同じ(対称)。標的側を H で挟むと CNOT になる。', '|11⟩ → −|11⟩'],
+    SWAP: ['SWAP', '2つのビットの状態をそのまま入れ替える。コストは 3(CNOT 3個ぶん)。', '|a,b⟩ → |b,a⟩'],
+  };
+  function showGate(t) {
+    S.sel = t;
+    document.querySelectorAll('#matSeg .gbtn').forEach((b) => b.classList.toggle('on', b.dataset.t === t));
+    const d = GDOC[t], g = Q.GATES[t];
+    $('matInfo').innerHTML = `<b style="color:${TOOLCOL[t]}">${d[0]}</b>　<span class="dim">コスト ${g.cost}</span><br>${d[1]}<br><span class="dim">${d[2]}</span>`;
+  }
+  function buildPalette() {   // gate list: click one to read about it (gates are placed from the drop-downs in the circuit)
     const ms = $('matSeg'); ms.innerHTML = '';
     S.st.gates.forEach((t) => {
-      const g = Q.GATES[t], b = document.createElement('div');
-      b.className = 'gbtn legend';
-      b.title = g.name;
+      const g = Q.GATES[t], b = document.createElement('button');
+      b.className = 'gbtn legend'; b.dataset.t = t;
       b.innerHTML = `<b style="color:${TOOLCOL[t]}">${gname(t)}</b><span class="dim">コスト${g.cost}</span>`;
+      b.onclick = () => showGate(t);
       ms.appendChild(b);
     });
-    $('matInfo').textContent = '回路の各マスをタップ(クリック)するとメニューが開き、ゲートを選べます。CNOT / CZ / SWAP は「→ q番号」で相手の線を指定します。';
+    showGate(S.st.gates.includes(S.sel) ? S.sel : S.st.gates[0]);
   }
 
   // ------------------------------------------------------------------ circuit editor (SVG)

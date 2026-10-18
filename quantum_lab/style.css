@@ -149,3 +149,7 @@ dl.kv dt { color: var(--dim); } dl.kv dd { margin: 0; text-align: right; }
 #circuit [data-step], #circuit { cursor: default; }
 #matSeg { display: flex; flex-wrap: wrap; gap: 6px; height: auto; }
 #matSeg .gbtn.legend { height: auto; min-height: 44px; justify-content: center; }
+.gbtn.legend { cursor: pointer; color: var(--text); font: inherit; }
+.gbtn.legend.on { border-color: var(--acc, #ffb703); background: #ffb7031f; }
+#matInfo { line-height: 1.6; margin-top: 8px; font-size: 13px; color: var(--text); }
+#matInfo .dim { font-size: 12px; }
