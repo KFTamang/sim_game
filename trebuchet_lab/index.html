@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trebuchet Lab — 投石機</title>
+<link rel="stylesheet" href="style.css?v=1">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VSQQ2718YQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-VSQQ2718YQ');
+</script>
+</head>
+<body>
+<header class="top">
+  <a class="home" href="../index.html" title="ゲーム一覧へ">← sim_game</a>
+  <h1>Trebuchet Lab</h1>
+  <nav id="stageTabs" class="tabs" aria-label="ステージ"></nav>
+  <button id="shareTop" class="share top-share" hidden>𝕏 でスコアを投稿</button>
+  <a class="help tech-btn" href="#" id="techBtn">技術解説</a>
+  <a class="help" href="#" id="helpBtn">遊び方</a>
+</header>
+
+<main class="layout">
+  <section class="stagewrap">
+    <canvas id="cv" aria-label="投石機の側面図と飛距離"></canvas>
+    <div id="toast" class="toast" hidden></div>
+  </section>
+
+  <aside class="panel">
+    <div class="card goal">
+      <div class="row"><span class="lbl">ステージ</span><b id="stageName"></b></div>
+      <p id="stageBrief" class="small"></p>
+      <div class="meter">
+        <div class="meterhead"><span id="objLbl">飛距離</span><span><b id="objVal">—</b> <span class="dim" id="objSub"></span></span></div>
+        <div class="bar"><div id="objBar"></div></div>
+      </div>
+      <div class="meter">
+        <div class="meterhead"><span>錘のエネルギー → 弾へ渡った割合</span><span><b id="etaVal">—</b></span></div>
+        <div class="bar"><div id="etaBar"></div></div>
+      </div>
+      <div class="row big"><span class="lbl">スコア</span><b id="scoreVal">—</b></div>
+      <div class="row small"><span class="lbl">ベスト</span><span id="bestVal">—</span></div>
+      <p id="status" class="status"></p>
+    </div>
+
+    <div class="card">
+      <h2>投石機の設計</h2>
+      <div id="sliders"></div>
+      <p class="small dim" id="fixedInfo"></p>
+      <div class="btns">
+        <button id="fireBtn" class="go">▶ 発射</button>
+        <button id="resetBtn">初期値に戻す</button>
+      </div>
+      <button id="submitBtn" class="primary" disabled>✔ 提出してスコア確定</button>
+    </div>
+
+    <div class="card">
+      <h2>放出の瞬間</h2>
+      <div id="numbers" class="small dim"></div>
+      <div id="tries" class="tries"></div>
+    </div>
+
+    <div class="card" id="reportCard" hidden>
+      <h2>結果</h2>
+      <div id="report" class="small"></div>
+      <button id="shareBtn" class="share">𝕏 でスコアを投稿</button>
+    </div>
+  </aside>
+</main>
+
+<dialog id="techDlg" class="tech">
+  <h2>技術解説: Trebuchet Lab のシミュレーション</h2>
+  <p class="note">カウンターウェイト式の投石機(トレビュシェット)を、平面内の3自由度の力学系として解く「ラグランジュ力学モデル」の解説です。ブラウザの中で1ミリ秒刻みの数値積分(4次のルンゲ・クッタ法)を行っています。</p>
+
+  <h3>1. 3つの角度で機械の姿を表す</h3>
+  <p>支点(高さ H)のまわりに腕が回り、腕の短い側(長さ a)の端にカウンターウェイト(錘、質量 M)、長い側(長さ b = L − a)の先端にスリング(紐、長さ s)と弾(質量 m)が付きます。角度はすべて「真下から時計回り」に測ります。</p>
+  <div class="eq">θ = 腕の角度      ψ = 吊り棒の角度(吊り下げ式のとき)      φ = スリングの角度
+u(β) = (−sin β, −cos β)
+先端   = 支点 + b·u(θ)            短い腕の端 = 支点 − a·u(θ)
+錘     = 短い腕の端 + c·u(ψ)      弾 = 先端 + s·u(φ)</div>
+  <p>固定式の錘は c = 0(腕の端に直接固定)、吊り下げ式は c &gt; 0(ヒンジで吊り棒がぶら下がる)です。スリングは「質量のない、曲がらない棒」として扱っています(実物の紐はたるむことがありますが、投擲中はほぼ張っています)。</p>
+
+  <h3>2. ラグランジュの運動方程式</h3>
+  <p>運動エネルギー T と位置エネルギー V から、3つの角度の運動方程式を自動的に導けます。</p>
+  <div class="eq">T = ½ A θ̇² + ½ M c² ψ̇² + ½ m s² φ̇²
+    − M a c cos(θ−ψ) θ̇ψ̇ + m b s cos(θ−φ) θ̇φ̇
+A  = I<sub>腕</sub> + M a² + m b²
+V  = g [ m<sub>腕</sub>(−d cos θ) + M(a cos θ − c cos ψ) + m(−b cos θ − s cos φ) ]
+M(q) q̈ + C(q, q̇) = − ∂V/∂q</div>
+  <p>θ̇ψ̇ や θ̇φ̇ の項が「腕・錘・スリングが互いに引っ張り合う」連成を表し、これが投石機の挙動を複雑で面白くしています。方程式は 3×3 の連立一次式として毎ステップ解いています。</p>
+
+  <h3>3. 弾は最初、地面の上を引きずられる</h3>
+  <p>はじめ弾は地面に置かれ、スリングは先端から前方へ伸びています。腕が回り出して先端が離れると、スリングが弾を地面ごと引きずります(摩擦なしの地面)。このとき、弾の高さ y<sub>p</sub> = 0 という拘束条件を、ラグランジュの未定乗数 λ(地面が弾を押す力)を使って 4×4 の連立方程式として解きます。</p>
+  <div class="eq">[ M  −J<sup>T</sup> ] [ q̈ ]   [ −C − ∂V/∂q ]
+[ J    0  ] [ λ  ] = [ −J̇ q̇       ]        J = ∂y<sub>p</sub>/∂q</div>
+  <p>λ が負になった瞬間(地面が弾を「引っ張る」ことはできない)が離陸で、ここからは拘束なしの3自由度に切り替わります。</p>
+
+  <h3>4. 放出角と「ウィップ効果」</h3>
+  <p>実際の投石機は、腕の先のピンからスリングの輪が外れた瞬間に弾が飛び出します。ここでは「スリングが腕の延長線に対してなす角(放出角)」がスライダーの値に達した瞬間に放出します。画面の点線が放出ラインで、白いスリングがこの線に重なると弾が飛びます。</p>
+  <p>スリングが先端の速さより弾を速く振り回す効果(ウィップ)は、角度 φ の運動方程式から自然に現れます。放出が早すぎると弾は高く上がるだけで遅く、遅すぎると速度が下向きになります。</p>
+
+  <h3>5. 放物運動と飛距離</h3>
+  <p>放出後は空気抵抗を無視した放物運動です。放出位置 (x<sub>0</sub>, y<sub>0</sub>)、速度 (v<sub>x</sub>, v<sub>y</sub>) から、</p>
+  <div class="eq">t<sub>f</sub> = ( v<sub>y</sub> + √(v<sub>y</sub>² + 2 g y<sub>0</sub>) ) / g       飛距離 = x<sub>0</sub> + v<sub>x</sub> t<sub>f</sub></div>
+  <p>飛距離は支点の真下(機械の中心)から測っています。</p>
+
+  <h3>6. エネルギー効率</h3>
+  <p>錘が落ちて失う位置エネルギー M g Δy のうち、弾が持ち去る運動エネルギー+位置エネルギー(½ m v² + m g y<sub>0</sub>)の割合が効率です。残りは、腕・錘・スリングに残った運動エネルギーです。腕の運動エネルギーはほとんど回収できないので、錘を腕に固定するより、吊り下げて真下に落とす方(錘が「死に荷重」にならない)が、弾へ渡る割合が大きくなります。実際に、このシミュレーションでも効率は 6〜8 割を超えます。</p>
+  <p>数値積分の検算として、放出の瞬間までの全エネルギー(運動+位置)の変化が 0.1% 未満であることを自動テストで確かめています。</p>
+
+  <h3>7. 失敗の条件</h3>
+  <ul>
+    <li><b>錘や腕が地面に当たる</b>: 錘の下端が地面に達した時点で腕が止まり、投擲失敗とします(短い腕や吊り棒が長すぎる設計)。</li>
+    <li><b>弾が放出前に地面へ落ちる</b>: スリングが長すぎる、放出角が合わない場合に起こります。</li>
+    <li><b>放出されない/後ろへ飛ぶ</b>: 放出角が極端なとき。</li>
+  </ul>
+
+  <h3>8. このシミュレーションに入っていないもの</h3>
+  <p>空気抵抗、スリングのたるみ(伸びと切れ)、腕のしなり、ピンの摩擦、地面や支柱との衝突の詳細、錘の大きさによる回転慣性は無視しています。また、吊り棒が短いときの飛距離が不規則に変わる現象は、錘が小さな振り子のように腕と共振するために、実際の機械でも見られる複雑さです。</p>
+</dialog>
+
+<dialog id="helpDlg">
+  <h2>遊び方</h2>
+  <ul>
+    <li>カウンターウェイト式の投石機。重い錘が落ちる力で腕を回し、先端のスリング(紐)で弾を振り回して投げます。</li>
+    <li>スライダーで設計を変えると、<b>下の細長い図</b>に弾の飛ぶ軌道(点線)と着地点が予測表示されます。スライダーを離す(または「発射」)と、上の図で実際に動きます。</li>
+    <li><b>放出角</b>は、スリングが腕の延長線に対してこの角度になった瞬間に弾が外れる、というピンの設定です。上の図の点線(放出ライン)に白いスリングが重なる瞬間に弾が飛びます。</li>
+    <li>ステージごとに動かせる設計が決まっています。飛距離を最大にしよう(ステージ4は目標距離にぴったり)。</li>
+    <li>錘や腕が地面に当たったり、弾が放出前に地面に落ちると失敗です。</li>
+    <li>スコア = 飛距離を、基準(0点)と最高付近(1000点)の間で換算したものです。</li>
+  </ul>
+  <form method="dialog"><button class="primary">はじめる</button></form>
+</dialog>
+
+<script src="js/solver.js?v=1"></script>
+<script src="js/stages.js?v=1"></script>
+<script src="js/game.js?v=1"></script>
+</body>
+</html>

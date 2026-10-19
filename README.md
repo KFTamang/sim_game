@@ -14,6 +14,7 @@
 | [`quantum_lab/`](quantum_lab/) | 量子回路パズル(重ね合わせ・位相・もつれ) | `quantum_lab/index.html` をブラウザで開く |
 | [`entropy_lab/`](entropy_lab/) | エントロピー(粒子ビームの散乱・可逆性) | `entropy_lab/index.html` をブラウザで開く |
 | [`engine_lab/`](engine_lab/) | 内燃機関の熱サイクル(オットー、ミラー、ターボ) | `engine_lab/index.html` をブラウザで開く |
+| [`trebuchet_lab/`](trebuchet_lab/) | 投石機(ラグランジュ力学、スリングのウィップ、吊り下げ式の錘) | `trebuchet_lab/index.html` をブラウザで開く |
 | [`crash_lab/`](crash_lab/) | クラッシャブル構造(衝突、座屈、エネルギー吸収) | `crash_lab/index.html` をブラウザで開く |
 
 各ゲームは独立したフォルダで、ビルド不要・外部依存なしの静的ページです。
@@ -35,6 +36,7 @@ magnet_lab/    ゲーム4: Magnet Lab
 quantum_lab/   ゲーム5: Quantum Lab
 entropy_lab/   ゲーム6: Entropy Lab
 engine_lab/    ゲーム7: Engine Lab
+trebuchet_lab/ ゲーム8: Trebuchet Lab
 common/        共通スクリプト(ピンチズーム)
 docs/          共通ドキュメント(題材案など)
 <new_game>/    今後のゲームも同じ構成で追加

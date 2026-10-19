@@ -1,0 +1,10 @@
+{
+  "name": "trebuchet_lab",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Trebuchet Lab: design a counterweight trebuchet and throw as far (or as accurately) as you can",
+  "scripts": {
+    "test": "node tests/solver.test.js",
+    "serve": "python3 -m http.server 8000"
+  }
+}
