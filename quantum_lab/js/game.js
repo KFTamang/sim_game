@@ -291,6 +291,8 @@
   $('undoBtn').onclick = undo; $('redoBtn').onclick = redo;
   $('clearBtn').onclick = () => { if (S.gates.length) commit(() => { S.gates = []; }); };
   $('helpBtn').onclick = (e) => { e.preventDefault(); $('helpDlg').showModal(); };
+  $('techBtn').onclick = (e) => { e.preventDefault(); $('techDlg').showModal(); };
+  $('techDlg').addEventListener('click', (e) => { if (e.target === $('techDlg')) $('techDlg').close(); });
 
   // step controls
   function setStep(s) { S.step = clamp(s, -1, S.st.cols - 1); updateView(); updatePanel(); drawCircuit(); }
