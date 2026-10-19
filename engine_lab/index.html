@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Engine Lab — 内燃機関の熱サイクル</title>
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-VSQQ2718YQ"></script>
 <script>
@@ -20,6 +20,7 @@
   <h1>Engine Lab</h1>
   <nav id="stageTabs" class="tabs" aria-label="ステージ"></nav>
   <button id="shareTop" class="share top-share" hidden>𝕏 でスコアを投稿</button>
+  <a class="help tech-btn" href="#" id="techBtn">技術解説</a>
   <a class="help" href="#" id="helpBtn">遊び方</a>
 </header>
 
@@ -72,6 +73,71 @@
   </aside>
 </main>
 
+<dialog id="techDlg" class="tech">
+  <h2>技術解説: Engine Lab のシミュレーション</h2>
+  <p class="note">4ストロークのガソリンエンジン(1気筒、排気量 0.5 L、ボア×ストローク 86×86 mm)を、クランク角 0.5° 刻みで計算する「1ゾーン・0次元モデル」の解説です。</p>
+
+  <h3>1. 幾何学とクランク角</h3>
+  <p>クランク角は、燃焼上死点(TDC)を 0°、吸気の開始を −360°、圧縮前の下死点(BDC)を −180°、膨張の終わりのBDCを +180° とします。クランク半径 a に対するコンロッド長の比を R = 150/43 ≈ 3.5 として、体積は次の式です。</p>
+  <div class="eq">V(θ) = Vc [ 1 + (r−1)/2 · ( R + 1 − cos θ − √(R² − sin² θ) ) ]
+Vc = Vd /(r−1)         (すきま容積)       r = 圧縮比</div>
+
+  <h3>2. 閉じたサイクル(吸気弁閉 → 排気弁開)</h3>
+  <p>筒内のガスを理想気体、1つの均一な温度 T とみなし、熱力学第1法則を積分します。</p>
+  <div class="eq">m c_v(T) dT = − p dV + dQ<sub>燃焼</sub> − dQ<sub>壁</sub>
+p = m R T / V        c_v(T) = 650 + 0.22 T   [J/(kg·K)]</div>
+  <p>吸気弁を閉じた時点の圧力・温度は、吸気圧 p<sub>int</sub> = スロットル × 過給圧 × 1 bar − 0.04 bar、吸気温度 330 K + 45 K × (過給圧 − 1)(インタークーラー付き)から決めます。閉じ込められる質量は、<b>吸気弁を閉じる時の体積 V(θ<sub>ivc</sub>)</b> で決まります。遅く閉じるほど、押し戻される分だけ質量が減ります。</p>
+
+  <h3>3. 燃焼(ヴィーベ関数)</h3>
+  <div class="eq">x<sub>b</sub>(θ) = 1 − exp[ −6.9 ((θ − θ₀)/Δθ)³ ]       θ₀ = 点火 + 着火遅れ(約4°)
+Q<sub>in</sub> = m<sub>燃料</sub> · LHV · η<sub>c</sub>      LHV = 44 MJ/kg, 理論空燃比 14.7
+Δθ = 45° × (1 + 1.6 max(0, λ − 1))                   … 薄いほど燃焼が遅い</div>
+  <p>燃焼効率 η<sub>c</sub> は、濃い混合気(λ&lt;1)では CO・HC のため低下し、極端に薄い混合気(λ&gt;1.15)では不完全燃焼で低下します。熱の入り方は x<sub>b</sub> の増分に比例します。</p>
+
+  <h3>4. 壁面への熱損失</h3>
+  <p>ウォシュニ(Woschni)型の熱伝達率を使います。</p>
+  <div class="eq">h = 3.26 · B<sup>−0.2</sup> · p<sup>0.8</sup> · T<sup>−0.55</sup> · w<sup>0.8</sup>      (p [kPa], B [m], w [m/s])
+w = 2.28 · (平均ピストン速度)  (燃焼中は少し増加)
+dQ<sub>壁</sub> = k · h · A(θ) · (T − T<sub>壁</sub>) · dt        T<sub>壁</sub> = 450 K, k = 2.3 (実機の損失率に合わせた補正)</div>
+  <p>面積 A は、シリンダーヘッド+ピストン頂面+露出したライナーです。圧縮比が高いほど、燃焼室の「表面積÷体積」が悪化するため、効率の伸びが鈍ります。</p>
+
+  <h3>5. ノッキング(リヴィングッド–ウー積分)</h3>
+  <p>未燃ガス(エンドガス)が、火炎が到達する前に<b>自己着火</b>するとノッキングです。着火遅れ τ(p, T) を使い、次の積分が 1 に達したら自己着火とみなします。</p>
+  <div class="eq">∫ dt / τ(p, T<sub>u</sub>) ≥ 1       (燃焼質量割合 95% に達するまで)
+τ = 17.68 (ON/100)<sup>3.402</sup> · p<sup>−1.7</sup> · exp(3800/T<sub>u</sub>)  [ms, p は atm](ドゥオ–エイゼ式)
+T<sub>u</sub> = T<sub>ivc</sub> (p/p<sub>ivc</sub>)<sup>0.26</sup>       … 未燃ガスを断熱圧縮したときの温度</div>
+  <p>式に 4.24 倍の補正をかけて、「オクタン価 91 で圧縮比 約11 あたりからノックする」ように調整しています。画面の「ノッキング度」は、この積分値です。オクタン価が高いほど τ が長くなり、ノックしにくくなります。</p>
+
+  <h3>6. ガス交換(吸気・排気)</h3>
+  <p>バルブ流れそのものは解かず、圧力の「レベル」で簡易的に扱います。</p>
+  <ul>
+    <li>吸気行程の仕事: <b>p<sub>int</sub> (V<sub>ivc</sub> − V<sub>tdc</sub>)</b>。スロットルを絞ると p<sub>int</sub> が下がり、ポンプ損失が増えます。</li>
+    <li>排気弁を開く(EVO)と、筒内圧は排気管の圧力 p<sub>b</sub> まで一気に下がります(<b>ブローダウン損失</b>)。早く開くほど、膨張仕事を捨てます。</li>
+    <li>排気行程は p<sub>b</sub> + Δp で押し出します。Δp = 0.9 bar × (EVO時の圧力/3.5 bar) × (回転数/2500) × exp(−EVO角/30°)。遅く開くほど Δp が大きく、ポンプ損失が増えます。</li>
+    <li>この2つのバランスで、排気弁の最適な開き時期ができます。</li>
+  </ul>
+
+  <h3>7. 出力の計算</h3>
+  <div class="eq">W<sub>正味(図示)</sub> = ∮ p dV の閉じた部分 + 排気 + 吸気
+IMEP = W<sub>図示</sub>/V<sub>d</sub>         BMEP = IMEP − FMEP
+FMEP = 0.7 + 0.15 n + 0.035 n²  [bar]   (n = 回転数/1000)
+η = W<sub>正味(軸)</sub> / (m<sub>燃料</sub> · LHV)
+トルク = BMEP · V<sub>d</sub> / (4π)      出力 = トルク × 角速度</div>
+  <p>「燃料エネルギーの行方」の棒は、燃料の発熱量が、①軸の仕事 ②摩擦 ③ポンプ損失 ④壁面への熱損失 ⑤排気に残る熱 ⑥不完全燃焼で出た分 に分かれる様子で、合計が必ず 100% になるように計算しています。</p>
+
+  <h3>8. 理想オットーサイクルとの違い</h3>
+  <div class="eq">η<sub>オットー</sub> = 1 − r<sup>1−γ</sup>      (r = 10, γ = 1.4 のとき 60%)</div>
+  <p>実際の正味効率が 35% 程度なのは、①高温のガスでは比熱比が下がる(γ ≈ 1.25〜1.3)②壁への熱損失 ③有限の燃焼時間(上死点で一瞬では燃えない)④ブローダウンとポンプ損失 ⑤摩擦、が効くからです。<b>ミラーサイクル</b>は、吸気弁を遅く閉じて<b>有効圧縮比</b>(吸気弁閉時の体積/すきま容積)を下げつつ、<b>膨張比は幾何学的圧縮比のまま</b>にする考え方で、ノッキングを避けながら膨張比を稼ぎます。過給は、減った吸入空気を補います。</p>
+
+  <h3>9. 限界と注意</h3>
+  <ul>
+    <li>1ゾーンモデルなので、既燃ガスと未燃ガスの温度差、火炎面の形、解離(高温での化学平衡)は扱っていません。</li>
+    <li>バルブ・吸排気管の流れ、残留ガス、EGR、NOx は含まれません。係数(熱損失の補正、ノック積分の補正、摩擦式)は、現実的な数値(正味効率 30〜38%、BMEP 10〜12 bar、ノック限界の圧縮比 11 前後)に合わせた校正値です。</li>
+    <li>回転数は固定(2500 rpm)で、回転数による変化(慣性、吸気脈動など)は扱っていません。</li>
+  </ul>
+  <form method="dialog"><button class="primary">閉じる</button></form>
+</dialog>
+
 <dialog id="helpDlg">
   <h2>遊び方</h2>
   <ul>
@@ -86,8 +152,8 @@
   <form method="dialog"><button class="primary">はじめる</button></form>
 </dialog>
 
-<script src="js/solver.js?v=2"></script>
-<script src="js/stages.js?v=2"></script>
-<script src="js/game.js?v=2"></script>
+<script src="js/solver.js?v=3"></script>
+<script src="js/stages.js?v=3"></script>
+<script src="js/game.js?v=3"></script>
 </body>
 </html>

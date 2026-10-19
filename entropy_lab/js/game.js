@@ -358,6 +358,8 @@
   $('clearBtn').onclick = () => { if (!S.mat.some((v) => v)) return; S.undo.push(Uint8Array.from(S.mat)); S.redo = []; S.mat.fill(0); S.dirty = true; };
   $('chkBins').onchange = (e) => { S.showBins = e.target.checked; };
   $('helpBtn').onclick = (e) => { e.preventDefault(); $('helpDlg').showModal(); };
+  $('techBtn').onclick = (e) => { e.preventDefault(); $('techDlg').showModal(); };
+  $('techDlg').addEventListener('click', (e) => { if (e.target === $('techDlg')) $('techDlg').close(); });
   window.addEventListener('keydown', (e) => {
     if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }

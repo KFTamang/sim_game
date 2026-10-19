@@ -284,6 +284,8 @@
   $('playBtn').onclick = () => { S.playing = !S.playing; $('playBtn').textContent = S.playing ? '⏸ 停止' : '▶ 再生'; };
   $('resetBtn').onclick = () => { S.par = defaultsFor(S.st); buildSliders(); recalc(); };
   $('helpBtn').onclick = (e) => { e.preventDefault(); $('helpDlg').showModal(); };
+  $('techBtn').onclick = (e) => { e.preventDefault(); $('techDlg').showModal(); };
+  $('techDlg').addEventListener('click', (e) => { if (e.target === $('techDlg')) $('techDlg').close(); });
   cv.addEventListener('pointerdown', (e) => { S.playing = !S.playing; $('playBtn').textContent = S.playing ? '⏸ 停止' : '▶ 再生'; });
 
   // ------------------------------------------------------------------ submit
