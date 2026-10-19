@@ -119,7 +119,7 @@
     });
   }
 
-  const TOOLCOL = { H: '#3aa0ff', X: '#ff7a59', Y: '#e879f9', Z: '#4ade80', S: '#fbbf24', Sdg: '#fbbf24', T: '#f59e0b', Tdg: '#f59e0b', CNOT: '#a78bfa', CZ: '#a78bfa', SWAP: '#a78bfa' };
+  const TOOLCOL = { H: '#3aa0ff', X: '#ff7a59', Y: '#e879f9', Z: '#4ade80', S: '#fbbf24', Sdg: '#fbbf24', T: '#f59e0b', Tdg: '#f59e0b', CNOT: '#a78bfa', CZ: '#a78bfa', SWAP: '#a78bfa', CCZ: '#a78bfa' };
   const gname = (t) => (t === 'CNOT' || t === 'CZ' || t === 'SWAP' ? t : Q.GATES[t].label);
   const GDOC = {
     H: ['H(アダマール)', 'ブロッホ球を「X軸とZ軸の真ん中の軸」まわりに180°回す。|0⟩(北極)→|+⟩(赤道)のように、確定した状態を50:50の重ね合わせに変え、逆に重ね合わせを確定状態に戻す。H を2回かけると元に戻る。基底(Z軸とX軸)の入れ替えにも使う: H X H = Z。', '行列 (1/√2)[[1,1],[1,−1]]'],
@@ -132,6 +132,7 @@
     Tdg: ['T†', 'T の逆(−45°)。コストは T と同じ 2。', '行列 [[1,0],[0,e^{−iπ/4}]]'],
     CNOT: ['CNOT(制御NOT)', '制御ビット(●)が |1⟩ のときだけ、標的ビット(⊕)を X で反転する。制御ビットが重ね合わせだと、2つのビットが「もつれ」る(H + CNOT でベル状態)。プルダウンで「CNOT → q番号」と選ぶと、選んだ線が制御、番号の線が標的。', '|c,t⟩ → |c, t⊕c⟩'],
     CZ: ['CZ(制御Z)', '両方のビットが |1⟩ のときだけ符号を −1 にする。どちらを制御と呼んでも同じ(対称)。標的側を H で挟むと CNOT になる。', '|11⟩ → −|11⟩'],
+    CCZ: ['CCZ(制御制御Z)', '3つのビットがすべて |1⟩ のときだけ符号を −1 にする(|111⟩ → −|111⟩)。3ビットを同時につなぐので、プルダウンは「CCZ」を選ぶだけ(3本の線がまとめて使われる)。グローバーの探索で「答え」に印をつける(オラクル)ときと、振幅を平均のまわりに反転する(拡散)ときの、中心になるゲート。コストは大きめ(6)。', '|111⟩ → −|111⟩'],
     SWAP: ['SWAP', '2つのビットの状態をそのまま入れ替える。コストは 3(CNOT 3個ぶん)。', '|a,b⟩ → |b,a⟩'],
   };
   function showGate(t) {
@@ -153,6 +154,7 @@
   }
 
   // ------------------------------------------------------------------ circuit editor (SVG)
+  const uses = (g, q) => g.q === q || g.k === q || g.k2 === q;
   const CW = 58, RH = 56, LBL = 64, TOP = 26;
   function drawCircuit() {
     const st = S.st, n = st.n, cols = st.cols;
@@ -178,7 +180,7 @@
     if (S.step < cols - 1) parts.push(`<line x1="${sx}" y1="${TOP - 2}" x2="${sx}" y2="${H - 2}" stroke="#ffb703" stroke-width="2" stroke-dasharray="4 3"/>`);
     // empty cells: a dashed slot with a "+" (the drop-down sits on top)
     for (let c = 0; c < cols; c++) for (let q = 0; q < n; q++) {
-      const occ = S.gates.some((g) => g.c === c && (g.q === q || g.k === q));
+      const occ = S.gates.some((g) => g.c === c && uses(g, q));
       if (occ) continue;
       parts.push(`<rect x="${LBL + c * CW + 4}" y="${TOP + q * RH + 6}" width="${CW - 8}" height="${RH - 12}" rx="8" fill="#ffffff08" stroke="#ffffff30" stroke-dasharray="3 3"/>`);
       parts.push(`<text x="${LBL + c * CW + CW / 2}" y="${TOP + q * RH + RH / 2 + 5}" text-anchor="middle" font-size="16" fill="#ffffff55">▾</text>`);
@@ -192,7 +194,8 @@
         s += `<rect x="${cx(g.c) - 19}" y="${cy(g.q) - 19}" width="38" height="38" rx="8" fill="#13202f" stroke="${col}" stroke-width="2.5"/>`;
         s += `<text x="${cx(g.c)}" y="${cy(g.q) + 6}" text-anchor="middle" font-size="18" font-weight="700" fill="${col}">${Q.GATES[t].label}</text>`;
       } else {
-        const y1 = cy(Math.min(g.q, g.k)), y2 = cy(Math.max(g.q, g.k));
+        const ws = [g.q, g.k, g.k2].filter((w) => w !== undefined);
+        const y1 = cy(Math.min(...ws)), y2 = cy(Math.max(...ws));
         s += `<line x1="${cx(g.c)}" y1="${y1}" x2="${cx(g.c)}" y2="${y2}" stroke="${col}" stroke-width="3"/>`;
         const dot = (q) => `<circle cx="${cx(g.c)}" cy="${cy(q)}" r="6.5" fill="${col}"/>`;
         if (t === 'CNOT') {
@@ -200,6 +203,7 @@
           s += `<circle cx="${cx(g.c)}" cy="${cy(g.q)}" r="14" fill="#13202f" stroke="${col}" stroke-width="3"/>`;
           s += `<line x1="${cx(g.c) - 14}" y1="${cy(g.q)}" x2="${cx(g.c) + 14}" y2="${cy(g.q)}" stroke="${col}" stroke-width="3"/><line x1="${cx(g.c)}" y1="${cy(g.q) - 14}" x2="${cx(g.c)}" y2="${cy(g.q) + 14}" stroke="${col}" stroke-width="3"/>`;
         } else if (t === 'CZ') { s += dot(g.k) + dot(g.q); }
+        else if (t === 'CCZ') { s += ws.map(dot).join(''); }
         else {
           for (const q of [g.q, g.k]) s += `<line x1="${cx(g.c) - 9}" y1="${cy(q) - 9}" x2="${cx(g.c) + 9}" y2="${cy(q) + 9}" stroke="${col}" stroke-width="3.5"/><line x1="${cx(g.c) + 9}" y1="${cy(q) - 9}" x2="${cx(g.c) - 9}" y2="${cy(q) + 9}" stroke="${col}" stroke-width="3.5"/>`;
         }
@@ -207,14 +211,17 @@
       parts.push(s + '</g>');
     }
     svg.innerHTML = parts.join('');
+    $('circuitInner').style.minWidth = `${Math.max(360, Math.round(W * 0.78))}px`;
+    $('circuitInner').style.maxWidth = `${Math.max(880, Math.round(W * 1.15))}px`;
     buildSelects(W, H);
   }
 
   // one drop-down per circuit cell (transparent, laid over the SVG)
   function cellValue(c, q) {
-    const g = S.gates.find((x) => x.c === c && (x.q === q || x.k === q));
+    const g = S.gates.find((x) => x.c === c && uses(x, q));
     if (!g) return '';
     if (Q.GATES[g.type].qubits === 1) return g.type;
+    if (Q.GATES[g.type].qubits === 3) return g.q === q ? g.type : '@';
     return g.k === q ? `${g.type}:${g.q}` : '@';
   }
   function buildSelects(W, H) {
@@ -235,6 +242,7 @@
       for (const t of st.gates) {
         const gt = Q.GATES[t];
         if (gt.qubits === 1) add(t, `${gname(t)}(${gt.name.split('(')[0]})`);
+        else if (gt.qubits === 3) { if (n >= 3) add(t, `${gname(t)}(3ビットまとめて)`); }
         else for (let o = 0; o < n; o++) if (o !== q) add(`${t}:${o}`, `${gname(t)} → q${o}`);
       }
       const cur = cellValue(c, q);
@@ -251,7 +259,8 @@
     commit(() => {
       removeAt(c, q);
       if (v === '') return;
-      if (v.includes(':')) { const [type, o] = v.split(':'); const t = +o; removeAt(c, t); S.gates.push({ c, type, q: t, k: q }); }
+      if (v === 'CCZ') { for (let w = 0; w < S.st.n; w++) removeAt(c, w); S.gates.push({ c, type: 'CCZ', q: 0, k: 1, k2: 2 }); }
+      else if (v.includes(':')) { const [type, o] = v.split(':'); const t = +o; removeAt(c, t); S.gates.push({ c, type, q: t, k: q }); }
       else S.gates.push({ c, type: v, q });
     });
   }
@@ -277,7 +286,7 @@
 
   function removeAt(c, q) {
     const before = S.gates.length;
-    S.gates = S.gates.filter((g) => !(g.c === c && (g.q === q || g.k === q)));
+    S.gates = S.gates.filter((g) => !(g.c === c && uses(g, q)));
     return before !== S.gates.length;
   }
   function pushUndo() { S.undo.push(S.gates.map((g) => ({ ...g }))); S.redo = []; if (S.undo.length > 100) S.undo.shift(); }
@@ -503,6 +512,14 @@
       7: 'CZ は「両方が1」で符号反転。標的ビットを H で挟むと、符号反転(Z)が反転(X)に変わる = CNOT。',
       8: '3回の CNOT(向きを交互に)で2ビットが入れ替わる。XOR を3回使った変数の入れ替えと同じ。',
       9: 'ベル状態に CNOT をもう1つ連ねるだけ。「コピーのコピー」で3ビットがもつれる。',
+      10: '各ビットに H をかけると、4つの答えの候補 |00⟩,|01⟩,|10⟩,|11⟩ が同じ振幅(1/2)で重なる。グローバーの探索は、この「全部の候補を同時に持つ」状態から始まる。',
+      11: 'CZ は |11⟩ の符号だけを反転する。これが「答えに印をつける」操作(オラクル)。確率は変わらない(4つとも25%)が、|11⟩ の位相だけが180°ずれる(棒の色がシアンになる)。',
+      12: '答えが |01⟩ のとき: 反転したい形に X で一度ずらして(0を1に)CZ をかけ、X で戻す。「答えを入れ替える」=「X で挟む位置を変える」。',
+      13: '拡散は「平均のまわりの反転」: 各振幅を平均値に対して反対側へ折り返す。H・X で全部 |0…0⟩ に寄せ、CZ で |11⟩ に印をつけ、元に戻す形で作れる。',
+      14: '4つのうち1つが答え。オラクル(印)→ 拡散(平均で折り返し)を1回行うだけで、答えの確率がちょうど100%になる。印をつけた振幅は平均より低くなり、折り返すと平均を大きく超える。',
+      15: '答えが |01⟩ のときも同じ手順。オラクルだけを作り替える(X で挟む)。拡散の部分は答えに依存しない。',
+      16: '8つから1つ。1回の「オラクル+拡散」で答えの確率は約78%に上がる。ただし1回では100%にならない(8は4より候補が多く、1回の折り返しで増える量が足りない)。',
+      17: '2回繰り返すと約94.5%。回数は約 (π/4)√N 回が最適で、やりすぎると逆に確率が下がる(N=8 なら3回目は約33%)。',
     };
     out.push(tips[st.id]);
     return out.slice(0, 3);

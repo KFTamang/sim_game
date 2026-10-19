@@ -35,6 +35,7 @@
     CNOT: { label: '●', cost: 2, qubits: 2, name: 'CNOT(制御ビットが1なら標的を反転)' },
     CZ: { label: 'CZ', cost: 2, qubits: 2, name: 'CZ(両方1なら位相反転)' },
     SWAP: { label: '×', cost: 3, qubits: 2, name: 'SWAP(2ビットの入れ替え)' },
+    CCZ: { label: 'CCZ', cost: 6, qubits: 3, name: 'CCZ(3ビットすべてが1なら位相反転)' },
   };
 
   const dimOf = (n) => 1 << n;
@@ -67,6 +68,10 @@
     const ab = 1 << bitOf(n, a), bb = 1 << bitOf(n, b), dim = dimOf(n);
     for (let i = 0; i < dim; i++) if ((i & ab) && (i & bb)) { s[2 * i] = -s[2 * i]; s[2 * i + 1] = -s[2 * i + 1]; }
   }
+  function applyCCZ(s, n, a, b, c) {
+    const m = (1 << bitOf(n, a)) | (1 << bitOf(n, b)) | (1 << bitOf(n, c)), dim = dimOf(n);
+    for (let i = 0; i < dim; i++) if ((i & m) === m) { s[2 * i] = -s[2 * i]; s[2 * i + 1] = -s[2 * i + 1]; }
+  }
   function applySwap(s, n, a, b) {
     const ab = 1 << bitOf(n, a), bb = 1 << bitOf(n, b), dim = dimOf(n);
     for (let i = 0; i < dim; i++) {
@@ -81,6 +86,7 @@
     if (g.type === 'CNOT') applyCNOT(s, n, g.k, g.q);
     else if (g.type === 'CZ') applyCZ(s, n, g.k, g.q);
     else if (g.type === 'SWAP') applySwap(s, n, g.k, g.q);
+    else if (g.type === 'CCZ') applyCCZ(s, n, g.q, g.k, g.k2);
     else applySingle(s, n, g.q, U[g.type]);
   }
 

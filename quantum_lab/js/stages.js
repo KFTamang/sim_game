@@ -35,6 +35,41 @@
       target: [g(0, 'H', 0), g(1, 'CNOT', 1, 0), g(2, 'CNOT', 2, 1)], par: [g(0, 'H', 0), g(1, 'CNOT', 1, 0), g(2, 'CNOT', 2, 1)],
       brief: '(|000⟩+|111⟩)/√2。3つの量子ビットがまとめてもつれた状態を、できるだけ少ないゲートで。' },
   ];
+
+  // ---- Grover's search: find the marked item among N = 2^n with about (pi/4) sqrt(N) rounds
+  const hAll = (c, n) => Array.from({ length: n }, (_, q) => g(c, 'H', q));
+  const xAll = (c, n) => Array.from({ length: n }, (_, q) => g(c, 'X', q));
+  const mark = (c, n) => (n === 2 ? [g(c, 'CZ', 1, 0)] : [{ c, type: 'CCZ', q: 0, k: 1, k2: 2 }]);
+  const diffusion = (c, n) => [...hAll(c, n), ...xAll(c + 1, n), ...mark(c + 2, n), ...xAll(c + 3, n), ...hAll(c + 4, n)];   // 5 columns
+  const grover2 = [...hAll(0, 2), ...mark(1, 2), ...diffusion(2, 2)];                                                         // find |11>
+  const grover2b = [...hAll(0, 2), g(1, 'X', 0), g(2, 'CZ', 1, 0), g(3, 'X', 0), ...diffusion(4, 2)];                        // find |01>
+  const grover3 = (rounds) => { let a = hAll(0, 3), c = 1; for (let r = 0; r < rounds; r++) { a = a.concat(mark(c, 3), diffusion(c + 1, 3)); c += 6; } return a; };
+  STAGES.push(
+    { id: 10, name: '全候補を重ねる', n: 2, cols: 3, kind: 'state', gates: ['H', 'X'],
+      target: hAll(0, 2), par: hAll(0, 2),
+      brief: '【グローバー探索 ①】4つの候補(|00⟩〜|11⟩)の中から答えを1つ見つけたい。まず、全部の候補を同じ重みで同時にもつ状態を作ろう。' },
+    { id: 11, name: '答えに印をつける', n: 2, cols: 4, kind: 'state', gates: ['H', 'X', 'CZ'],
+      target: [...hAll(0, 2), ...mark(1, 2)], par: [...hAll(0, 2), ...mark(1, 2)],
+      brief: '【グローバー探索 ②】答えは |11⟩ だとする。答えの符号だけを反転させよう(オラクル)。確率は変わらず、棒の色(位相)だけが変わる。' },
+    { id: 12, name: '別の答えに印', n: 2, cols: 5, kind: 'state', gates: ['H', 'X', 'CZ'],
+      target: [...hAll(0, 2), g(1, 'X', 0), g(2, 'CZ', 1, 0), g(3, 'X', 0)], par: [...hAll(0, 2), g(1, 'X', 0), g(2, 'CZ', 1, 0), g(3, 'X', 0)],
+      brief: '【グローバー探索 ③】答えが |01⟩ のときの印。CZ は |11⟩ にしか印をつけられない。X でビットを入れ替えて、印をつける場所を変えよう。' },
+    { id: 13, name: '平均で折り返す', n: 2, cols: 6, kind: 'unitary', gates: ['H', 'X', 'CZ'],
+      target: diffusion(0, 2), par: diffusion(0, 2),
+      brief: '【グローバー探索 ④】拡散=「全部の振幅を、平均値のまわりで折り返す」操作。印のついた(平均より低くなった)振幅は、折り返すと平均を超えて高くなる。この操作を H・X・CZ で作ろう。' },
+    { id: 14, name: 'グローバー探索(4から1)', n: 2, cols: 8, kind: 'state', gates: ['H', 'X', 'CZ'],
+      target: grover2, par: grover2,
+      brief: '【グローバー探索 ⑤】全部を重ねる → 印をつける → 平均で折り返す。たった1回で、|11⟩ の確率が 25% → 100% になる。4つから1つを探すのに、候補を1つずつ調べる必要がない。' },
+    { id: 15, name: 'グローバー探索(答え:01)', n: 2, cols: 10, kind: 'state', gates: ['H', 'X', 'CZ'],
+      target: grover2b, par: grover2b,
+      brief: '【グローバー探索 ⑥】答えが |01⟩ のとき。オラクルだけを作り替えれば、拡散(平均で折り返す部分)は同じものを使える。' },
+    { id: 16, name: 'グローバー探索(8から1)', n: 3, cols: 8, kind: 'state', gates: ['H', 'X', 'CCZ'],
+      target: grover3(1), par: grover3(1),
+      brief: '【グローバー探索 ⑦】3ビット = 8つの候補から |111⟩ を探す。CCZ(3ビットがすべて1なら符号反転)を使い、「印 → 折り返し」を1回。答えの確率は約78%に上がるが、まだ100%ではない。' },
+    { id: 17, name: 'グローバー探索(2回)', n: 3, cols: 14, kind: 'state', gates: ['H', 'X', 'CCZ'],
+      target: grover3(2), par: grover3(2),
+      brief: '【グローバー探索 ⑧】「印 → 折り返し」をもう1回。答えの確率は約94.5%まで上がる。最適な回数は約 (π/4)√N 回。やりすぎると確率が下がるのも体験しよう(3回目は約33%)。' },
+  );
   const api = { STAGES };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.QuantumStages = api;

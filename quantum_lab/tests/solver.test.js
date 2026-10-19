@@ -56,4 +56,33 @@ test('global phase does not matter, but a relative phase does', () => {
   near(Q.stateFidelity(b, c), 0, 1e-9);
 });
 
+
+test("Grover: one round finds 1 of 4 with certainty; 1 of 8 needs about 2 rounds (78 % then 94.5 %, 3rd round overshoots)", () => {
+  const { STAGES } = require('../js/stages.js');
+  const st = (id) => STAGES.find((x) => x.id === id);
+  const p = (id, idx) => Q.probs(Q.run(st(id).n, st(id).target))[idx];
+  assert(Math.abs(p(14, 3) - 1) < 1e-12, 'N=4, one round: ' + p(14, 3));
+  assert(Math.abs(p(15, 1) - 1) < 1e-12, 'marked |01>: ' + p(15, 1));
+  assert(Math.abs(p(16, 7) - 0.78125) < 1e-9, 'N=8 one round: ' + p(16, 7));
+  assert(Math.abs(p(17, 7) - 0.9453125) < 1e-9, 'N=8 two rounds: ' + p(17, 7));
+  // a third round overshoots: sin^2(7 asin(1/sqrt 8)) ~ 0.33
+  const th = Math.asin(1 / Math.sqrt(8));
+  assert(Math.abs(Math.sin(7 * th) ** 2 - 0.3301) < 1e-3, 'third round');
+  // the oracle only flips the sign of the marked state: probabilities stay uniform
+  const pr = Q.probs(Q.run(2, st(11).target));
+  assert(pr.every((x) => Math.abs(x - 0.25) < 1e-12), 'oracle keeps probabilities');
+});
+
+test('diffusion operator = 2|s><s| - I up to a global phase (inversion about the mean)', () => {
+  const { STAGES } = require('../js/stages.js');
+  const U = Q.unitary(2, STAGES.find((x) => x.id === 13).target);
+  // apply to a vector with amplitudes a_i: result should be 2*mean - a_i (times a global sign)
+  const a = [0.1, 0.5, -0.3, 0.7], mean = a.reduce((x, y) => x + y) / 4;
+  const out = [0, 0, 0, 0];
+  for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) out[i] += U[j][2 * i] * a[j];
+  const want = a.map((x) => 2 * mean - x);
+  const sgn = Math.abs(out[0] - want[0]) < 1e-9 ? 1 : -1;
+  assert(out.every((x, i) => Math.abs(sgn * x - want[i]) < 1e-9), JSON.stringify([out, want]));
+});
+
 process.exit(failed ? 1 : 0);
